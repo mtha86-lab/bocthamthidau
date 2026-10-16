@@ -18,8 +18,8 @@ header p{margin:6px 0 0;opacity:.92}
 main{flex:1;width:100%;max-width:1100px;margin:-20px auto 0;padding:0 14px 30px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:0 10px 30px #7b2ff726;margin-bottom:16px}
 label{display:block;font-weight:700;margin:0 0 6px;font-size:.92rem}
-input[type=text],textarea{width:100%;padding:11px 13px;border:2px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
-input:focus,textarea:focus{outline:none;border-color:var(--p2)}
+input[type=text],textarea,select{width:100%;padding:11px 13px;border:2px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--p2)}
 textarea{min-height:150px;resize:vertical}
 .types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .types button{flex:1 1 130px;padding:11px 8px;border-radius:12px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
@@ -28,29 +28,37 @@ textarea{min-height:150px;resize:vertical}
 .hint{color:var(--mut);font-size:.82rem;margin-top:4px}
 .btn{border:0;border-radius:14px;padding:13px 22px;font:inherit;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(120deg,var(--p1),var(--p2));box-shadow:0 6px 18px #ff3d7155}
 .btn.alt{background:var(--bg);color:var(--tx);border:2px solid var(--bd);box-shadow:none}
+.btn.gold{background:linear-gradient(120deg,#ffb800,#ff7a00);box-shadow:0 6px 18px #ff9f1c55}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;filter:grayscale(.6)}
 .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
 .err{color:var(--p1);font-weight:700}
+#byeP{margin-top:12px;padding:14px;border-radius:14px;border:2px dashed #ff9f1c;background:var(--bg)}
 h2{margin:0 0 10px;font-size:1.3rem}
 .tag{display:inline-block;padding:3px 10px;border-radius:99px;color:#fff;font-size:.8rem;font-weight:700;background:var(--p2)}
 .pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:10px 0}
 .pair{padding:9px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--bd);font-weight:600}
 .pair b{color:var(--nam)}.pair i{color:var(--nu);font-style:normal;font-weight:700}
-.bracket{display:flex;gap:22px;overflow-x:auto;padding:6px 2px 14px}
-.round{min-width:220px;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
-.round h3{margin:0;text-align:center;font-size:.95rem;color:var(--p2)}
-.match{border:2px solid var(--bd);border-radius:14px;overflow:hidden;background:var(--bg)}
-.slot{padding:10px 12px;cursor:pointer;font-weight:600;border-bottom:1px solid var(--bd);min-height:42px;display:flex;align-items:center;gap:6px}
-.slot:last-child{border-bottom:0}
-.slot:hover{background:#7b2ff71f}
-.slot.win{background:linear-gradient(120deg,#12b76a,#00c2ff);color:#fff}
-.slot.empty{color:var(--mut);cursor:default;font-weight:400;font-style:italic}
-.slot.bye{color:var(--p1);cursor:default}
-.champ{text-align:center;margin-top:8px;padding:16px;border-radius:16px;background:linear-gradient(120deg,#ffb800,#ff3d71);color:#fff;font-size:1.3rem;font-weight:800}
+.bwrap{overflow:auto;border:1px solid var(--bd);border-radius:14px;padding:8px;background:var(--card)}
+.bwrap svg{display:block;margin:auto}
+.slotg:hover rect{stroke:var(--p2)}
 footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var(--p2),#3a1d9c);color:#fff;font-weight:600;font-size:.92rem}
 .spin{animation:sp .15s linear infinite}
 @keyframes sp{50%{opacity:.4}}
-@media print{header .hint,.types,.btn,#form{display:none}}
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ :root,:root[data-theme="dark"]{--bg:#fff!important;--card:#fff!important;--tx:#1c1840!important;--mut:#6b6794!important;--bd:#b9b2e0!important;color-scheme:light!important}
+ body{background:#fff;min-height:0}
+ header{padding:4px}header p{display:none}header h1{font-size:15px;text-shadow:none}
+ main{margin:0;padding:0;max-width:none}
+ #form,.row,.hint,.pairbox{display:none!important}
+ .card{box-shadow:none;border:0;padding:0;margin:0}
+ h2{font-size:14px;margin:4px 0}
+ .bwrap{overflow:visible;border:0;padding:0}
+ .bwrap svg{width:100%!important;height:160mm!important}
+ footer{padding:4px;font-size:11px;background:none;color:#333}
+}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <header>
@@ -66,16 +74,18 @@ footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var
   <div class="grid" id="inputs"></div>
   <div class="row">
     <button class="btn" id="draw">🎲 BỐC THĂM</button>
+    <button class="btn gold" id="byeBtn" disabled>⭐ VĐV được đặc cách</button>
     <button class="btn alt" id="sample">Điền mẫu</button>
     <button class="btn alt" id="reset">Xóa hết</button>
     <span class="err" id="err"></span>
   </div>
+  <div class="hint" id="byeHint">Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) là số lẻ.</div>
+  <div id="byeP" hidden></div>
 </section>
 <section id="result"></section>
 </main>
 <footer>Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh</footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 const TYPES={
   dn:{n:"Đơn nam",g:"m",t:"single"},
@@ -84,105 +94,153 @@ const TYPES={
   denu:{n:"Đôi nữ",g:"f",t:"pair"},
   dnn:{n:"Đôi nam nữ",g:"x",t:"mixed"}
 };
-let cur="dn",rounds=[],pairsList=[];
+let cur="dn",rounds=[],pairsList=[],byeS="",byeM="",byeF="";
 const $=id=>document.getElementById(id);
 const lines=s=>s.split(/\n/).map(x=>x.trim()).filter(Boolean);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const normPair=l=>l.split(/\s*(?:&|\/|\+|\s-\s|–)\s*/).filter(Boolean).join(" & ");
 
 function renderTypes(){
   $("types").innerHTML=Object.entries(TYPES).map(([k,v])=>`<button data-k="${k}" class="${k===cur?'on':''}">${v.n}</button>`).join("");
-  $("types").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;renderTypes();renderInputs()});
+  $("types").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;byeS=byeM=byeF="";renderTypes();renderInputs()});
 }
 function renderInputs(){
   const t=TYPES[cur];let h="";
   if(t.t==="single")h=`<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"}</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Mỗi dòng một vận động viên.</div></div>`;
   if(t.t==="pair")h=`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình\nLê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
-  if(t.t==="mixed")h=`<div><label>♂ Danh sách VĐV NAM</label><textarea id="a" placeholder="Mỗi dòng một tên nam"></textarea></div><div><label>♀ Danh sách VĐV NỮ</label><textarea id="b" placeholder="Mỗi dòng một tên nữ"></textarea></div><div class="hint">Hệ thống sẽ bốc thăm ngẫu nhiên ghép mỗi nam với một nữ thành cặp cố định.</div>`;
-  $("inputs").innerHTML=h;$("err").textContent="";
+  if(t.t==="mixed")h=`<div><label>♂ Danh sách VĐV NAM</label><textarea id="a" placeholder="Mỗi dòng một tên nam"></textarea></div><div><label>♀ Danh sách VĐV NỮ</label><textarea id="b" placeholder="Mỗi dòng một tên nữ"></textarea></div><div class="hint">Hệ thống bốc thăm ngẫu nhiên ghép mỗi nam với một nữ thành cặp cố định.</div>`;
+  $("inputs").innerHTML=h;$("err").textContent="";updBye();
 }
+/* ---------- Đặc cách ---------- */
+function entrants(){
+  const t=TYPES[cur],a=lines($("a")?$("a").value:"");
+  if(t.t==="mixed"){const f=lines($("b")?$("b").value:"");return{m:a,f,n:Math.min(a.length,f.length)}}
+  const l=t.t==="pair"?a.map(normPair):a;return{l,n:l.length};
+}
+function opts(list,sel){return `<option value="">🎲 Ngẫu nhiên</option>`+list.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("")}
+function renderBye(){
+  const e=entrants(),t=TYPES[cur];
+  if(t.t==="mixed"){
+    if(!e.m.includes(byeM))byeM="";if(!e.f.includes(byeF))byeF="";
+    $("byeP").innerHTML=`<b>Chọn cặp được đặc cách vào vòng sau</b><div class="grid" style="margin-top:8px"><div><label>♂ Nam</label><select id="sM">${opts(e.m,byeM)}</select></div><div><label>♀ Nữ</label><select id="sF">${opts(e.f,byeF)}</select></div></div><div class="hint">Nam và nữ được chọn sẽ ghép thành cặp được đặc cách. Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn.</div>`;
+    $("sM").onchange=ev=>{byeM=ev.target.value;lbl()};$("sF").onchange=ev=>{byeF=ev.target.value;lbl()};
+  }else{
+    if(!e.l.includes(byeS))byeS="";
+    $("byeP").innerHTML=`<b>Chọn ${t.t==="pair"?"cặp":"VĐV"} được đặc cách vào vòng sau</b><div style="margin-top:8px"><select id="sS">${opts(e.l,byeS)}</select></div><div class="hint">Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn khi bốc thăm.</div>`;
+    $("sS").onchange=ev=>{byeS=ev.target.value;lbl()};
+  }
+}
+function lbl(){
+  const t=TYPES[cur],pick=t.t==="mixed"?[byeM,byeF].filter(Boolean).join(" & "):byeS;
+  $("byeBtn").textContent="⭐ VĐV được đặc cách"+(pick?": "+pick:"");
+}
+function updBye(){
+  const e=entrants(),odd=e.n>=3&&e.n%2===1;
+  $("byeBtn").disabled=!odd;
+  $("byeHint").textContent=odd?`Có ${e.n} ${TYPES[cur].t==="single"?"VĐV":"cặp"} (số lẻ) – nhấn "VĐV được đặc cách" để chỉ định người vào thẳng vòng sau.`:'Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) là số lẻ.';
+  if(!odd){byeS=byeM=byeF="";$("byeP").hidden=true}else if(!$("byeP").hidden)renderBye();
+  lbl();
+}
+$("byeBtn").onclick=()=>{const p=$("byeP");p.hidden=!p.hidden;if(!p.hidden)renderBye()};
+$("inputs").addEventListener("input",updBye);
+
 const SAMPLE={
   dn:["Nguyễn Văn An","Trần Quốc Bảo","Lê Minh Cường","Phạm Đức Dũng","Võ Hoàng Em"],
   dnu:["Nguyễn Thị Hoa","Trần Ngọc Lan","Lê Thu Mai","Phạm Bích Ngọc","Võ Thanh Thảo","Đặng Kim Yến"],
-  den:["An & Bảo","Cường & Dũng","Em & Phúc","Giang & Hải"],
+  den:["An & Bảo","Cường & Dũng","Em & Phúc","Giang & Hải","Khánh & Long"],
   denu:["Hoa & Lan","Mai & Ngọc","Thảo & Yến"],
-  dnn:[["An","Bảo","Cường","Dũng"],["Hoa","Lan","Mai","Ngọc"]]
+  dnn:[["An","Bảo","Cường","Dũng","Em"],["Hoa","Lan","Mai","Ngọc","Oanh"]]
 };
 $("sample").onclick=()=>{
   if(!$("sport").value)$("sport").value="Cầu lông";
   const s=SAMPLE[cur];
   if(cur==="dnn"){$("a").value=s[0].join("\n");$("b").value=s[1].join("\n")}else $("a").value=s.join("\n");
+  updBye();
 };
-$("reset").onclick=()=>{$("sport").value="";renderInputs();$("result").innerHTML="";rounds=[]};
+$("reset").onclick=()=>{$("sport").value="";byeS=byeM=byeF="";renderInputs();$("result").innerHTML="";rounds=[]};
 
+/* ---------- Sơ đồ ---------- */
 function build(entries){
-  rounds=[entries.map(n=>n)];
+  rounds=[entries.slice()];
   while(rounds[rounds.length-1].length>1){
-    const n=rounds[rounds.length-1].length,next=Array(Math.ceil(n/2)).fill(null);
-    if(n%2===1)next[next.length-1]=rounds[rounds.length-1][n-1]; // đặc cách
+    const p=rounds[rounds.length-1],n=p.length,next=Array(Math.ceil(n/2)).fill(null);
+    if(n%2===1)next[next.length-1]=p[n-1];
     rounds.push(next);
   }
 }
 function pick(r,i){
-  const nm=rounds[r][i];if(!nm||r>=rounds.length-1)return;
+  const nm=rounds[r][i],R=rounds.length;
+  if(!nm||r>=R-1)return;
   const n=rounds[r].length;if(n%2===1&&i===n-1)return;
-  const ni=Math.floor(i/2);
-  if(rounds[r+1][ni]===nm)return;
+  const ni=i>>1;if(rounds[r+1][ni]===nm)return;
   rounds[r+1][ni]=nm;
-  for(let k=r+2;k<rounds.length;k++){rounds[k]=rounds[k].map(()=>null);} // xoá các vòng sau
-  // giữ lại người được đặc cách ở vòng sau
-  for(let k=r+1;k<rounds.length-1;k++){const n2=rounds[k].length;if(n2%2===1&&k>r+1&&false){}}
-  for(let k=r+1;k<rounds.length-1;k++){const n2=rounds[k].length;if(n2%2===1)rounds[k+1][rounds[k+1].length-1]=rounds[k][n2-1];}
+  for(let k=r+2;k<R;k++)rounds[k]=rounds[k].map(()=>null);
+  for(let k=r+1;k<R-1;k++){const n2=rounds[k].length;if(n2%2===1)rounds[k+1][rounds[k+1].length-1]=rounds[k][n2-1]}
   show();
 }
-function label(nm){
-  const t=TYPES[cur];
-  if(t.t==="single")return (t.g==="m"?"♂ ":"♀ ")+esc(nm);
-  return esc(nm);
+const cut=(s,n=30)=>s.length>n?s.slice(0,n-1)+"…":s;
+const rname=(r,R)=>r===R-1?"🏆 Vô địch":r===R-2?"Chung kết":r===R-3?"Bán kết":"Vòng "+(r+1);
+function svgBracket(ex){
+  const C=ex?{bg:"#fff",box:"#fff",bd:"#b9b2e0",tx:"#1c1840",mut:"#8a86b0",ln:"#7b2fF7",win:"#12b76a",hd:"#ff3d71"}
+            :{bg:"none",box:"var(--bg)",bd:"var(--bd)",tx:"var(--tx)",mut:"var(--mut)",ln:"var(--p2)",win:"var(--ok)",hd:"var(--p1)"};
+  const W=250,H=30,G=56,TOP=40,R=rounds.length;
+  const cs=[rounds[0].map((_,i)=>TOP+H/2+i*(H+6)+Math.floor(i/2)*18)];
+  for(let r=1;r<R;r++)cs[r]=rounds[r].map((_,j)=>{const a=cs[r-1][2*j],b=cs[r-1][2*j+1];return b===undefined?a:(a+b)/2});
+  const w=R*(W+G)-G+8,h=cs[0][cs[0].length-1]+H/2+14;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Arial,Helvetica,sans-serif" font-size="13">`;
+  if(ex)s+=`<rect width="${w}" height="${h}" fill="#fff"/>`;
+  for(let r=0;r<R;r++){
+    const x=4+r*(W+G),rd=rounds[r];
+    s+=`<text x="${x+W/2}" y="22" text-anchor="middle" font-weight="700" font-size="15" fill="${C.hd}">${rname(r,R)}</text>`;
+    if(r===R-1){
+      const v=rd[0],y=cs[r][0]-H/2;
+      s+=`<rect x="${x}" y="${y-4}" width="${W}" height="${H+8}" rx="10" fill="${v?"#ffb800":C.box}" stroke="#ff9f1c" stroke-width="2"/><text x="${x+W/2}" y="${cs[r][0]+5}" text-anchor="middle" font-weight="700" fill="${v?"#fff":C.mut}">${v?"🏆 "+esc(cut(v,26)):"Chưa xác định"}</text>`;
+      continue;
+    }
+    const n=rd.length,nx=x+W+G;
+    for(let j=0;j<rounds[r+1].length;j++){
+      const a=2*j,b=2*j+1,mx=x+W+G/2;let d=`M${x+W} ${cs[r][a]}H${mx}`;
+      if(b<n)d+=`M${x+W} ${cs[r][b]}H${mx}M${mx} ${cs[r][a]}V${cs[r][b]}`;
+      d+=`M${mx} ${cs[r+1][j]}H${nx}`;
+      s+=`<path d="${d}" fill="none" stroke="${C.ln}" stroke-width="1.6"/>`;
+    }
+    rd.forEach((v,i)=>{
+      const bye=n%2===1&&i===n-1,win=v&&!bye&&rounds[r+1][i>>1]===v,y=cs[r][i]-H/2,can=v&&!bye&&!ex;
+      s+=`<g class="slotg" ${can?`style="cursor:pointer" onclick="pick(${r},${i})"`:""}><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="8" fill="${win?C.win:C.box}" stroke="${bye?"#ff9f1c":C.bd}" stroke-width="${bye?2:1.5}" ${bye?'stroke-dasharray="5 3"':""}/>`+
+        `<text x="${x+10}" y="${y+H/2+4.5}" fill="${win?"#fff":v?C.tx:C.mut}" ${win?'font-weight="700"':""}>${v?(bye?"⭐ ":"")+esc(cut(v,bye?27:30)):"· · ·"}</text></g>`;
+    });
+  }
+  return{svg:s+"</svg>",w,h};
 }
+function lab(nm){return esc(nm)}
 function show(){
   const t=TYPES[cur],sport=esc($("sport").value.trim()||"Môn thi đấu");
   let h=`<div class="card"><h2>${sport} <span class="tag">${t.n}</span></h2>`;
-  if(pairsList.length){
-    h+=`<b>Kết quả bốc thăm ghép cặp:</b><div class="pairs">`+pairsList.map((p,i)=>`<div class="pair">${i+1}. ${p}</div>`).join("")+`</div>`;
-  }
-  h+=`<div class="hint">Nhấn vào tên VĐV/cặp thắng để đưa vào vòng sau.</div><div class="bracket">`;
-  const R=rounds.length;
-  rounds.forEach((rd,r)=>{
-    const nm=r===R-1?"Chung kết ➜ Vô địch":r===R-2&&R>2?"Chung kết":r===R-3&&R>3?"Bán kết":"Vòng "+(r+1);
-    h+=`<div class="round"><h3>${r===R-1?"🏅 Vô địch":(r===R-2?"Chung kết":(r===R-3?"Bán kết":"Vòng "+(r+1)))}</h3>`;
-    if(r===R-1){h+=`<div class="match"><div class="slot ${rd[0]?'win':'empty'}">${rd[0]?label(rd[0]):"Chưa xác định"}</div></div></div>`;return}
-    for(let i=0;i<rd.length;i+=2){
-      const a=rd[i],b=rd[i+1],nx=rounds[r+1][Math.floor(i/2)];
-      const cell=(v,idx)=>v==null?`<div class="slot empty">Chờ kết quả</div>`:`<div class="slot ${nx===v?'win':''}" onclick="pick(${r},${idx})">${label(v)}</div>`;
-      h+=`<div class="match">${cell(a,i)}${b===undefined?`<div class="slot bye">⏭ Đặc cách vào vòng sau</div>`:cell(b,i+1)}</div>`;
-    }
-    h+=`</div>`;
-  });
-  h+=`</div>`;
-  const champ=rounds[R-1][0];
-  if(champ&&R>1)h+=`<div class="champ">🥇 ${label(champ)}</div>`;
-  h+=`<div class="row"><button class="btn" onclick="drawNow()">🔁 Bốc thăm lại</button><button class="btn alt" onclick="exportDoc()">📄 Xuất file Word</button><button class="btn alt" onclick="window.print()">🖨 In lịch thi đấu</button></div></div>`;
+  if(pairsList.length)h+=`<div class="pairbox"><b>Kết quả bốc thăm ghép cặp:</b><div class="pairs">`+pairsList.map((p,i)=>`<div class="pair">${p}</div>`).join("")+`</div></div>`;
+  h+=`<div class="hint" style="margin-bottom:8px">Nhấn vào tên VĐV/cặp thắng để đưa vào vòng sau. Ô viền cam ⭐ là người được đặc cách.</div><div class="bwrap">${svgBracket(false).svg}</div>`;
+  h+=`<div class="row"><button class="btn" onclick="drawNow()">🔁 Bốc thăm lại</button><button class="btn alt" onclick="exportDoc()">📄 Xuất file Word</button><button class="btn alt" onclick="window.print()">🖨 In lịch thi đấu (1 trang)</button></div></div>`;
   $("result").innerHTML=h;
 }
 function collect(){
-  const t=TYPES[cur],a=lines($("a").value);
-  pairsList=[];
-  if(t.t==="single"){
-    if(a.length<2)throw "Cần ít nhất 2 vận động viên.";
-    return shuffle(a);
+  const t=TYPES[cur],e=entrants();pairsList=[];
+  if(e.n<2)throw t.t==="single"?"Cần ít nhất 2 vận động viên.":t.t==="pair"?"Cần ít nhất 2 cặp.":"Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
+  const odd=e.n%2===1;
+  if(t.t!=="mixed"){
+    let arr=e.l;
+    if(odd&&byeS&&arr.includes(byeS)){const k=arr.indexOf(byeS);const rest=shuffle(arr.filter((_,i)=>i!==k));return rest.concat([byeS])}
+    return shuffle(arr);
   }
-  if(t.t==="pair"){
-    const ps=a.map(l=>l.split(/\s*(?:&|\/|\+|\s-\s|–)\s*/).filter(Boolean).join(" & "));
-    if(ps.length<2)throw "Cần ít nhất 2 cặp.";
-    return shuffle(ps);
-  }
-  const b=lines($("b").value),m=shuffle(a),f=shuffle(b),k=Math.min(m.length,f.length);
-  if(k<2)throw "Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
-  const ps=[];
-  for(let i=0;i<k;i++){ps.push(m[i]+" & "+f[i]);pairsList.push(`<b>♂ ${esc(m[i])}</b> + <i>♀ ${esc(f[i])}</i>`)}
-  let w=m.length!==f.length?`Lưu ý: số nam (${m.length}) khác số nữ (${f.length}); ${Math.abs(m.length-f.length)} VĐV không có cặp.`:"";
-  if(w)pairsList.push(`<span class="err">${w}</span>`);
+  let M=e.m.slice(),F=e.f.slice(),bm=null,bf=null;
+  if(odd&&(byeM||byeF)){
+    bm=M.includes(byeM)?byeM:null;bf=F.includes(byeF)?byeF:null;
+    if(bm)M.splice(M.indexOf(bm),1);if(bf)F.splice(F.indexOf(bf),1);
+    M=shuffle(M);F=shuffle(F);if(!bm)bm=M.shift();if(!bf)bf=F.shift();
+  }else{M=shuffle(M);F=shuffle(F)}
+  const k=bm?e.n-1:e.n,ps=[];
+  for(let i=0;i<k;i++){ps.push(M[i]+" & "+F[i]);pairsList.push(`<b>♂ ${esc(M[i])}</b> + <i>♀ ${esc(F[i])}</i>`)}
+  if(bm){ps.push(bm+" & "+bf);pairsList.push(`<b>♂ ${esc(bm)}</b> + <i>♀ ${esc(bf)}</i> ⭐ đặc cách`)}
+  if(e.m.length!==e.f.length)pairsList.push(`<span class="err">Lưu ý: số nam (${e.m.length}) khác số nữ (${e.f.length}); ${Math.abs(e.m.length-e.f.length)} VĐV không có cặp.</span>`);
   return ps;
 }
 function drawNow(){
@@ -195,42 +253,34 @@ function drawNow(){
   },110);
 }
 $("draw").onclick=drawNow;
+
+/* ---------- Xuất Word (1 trang ngang, sơ đồ nhánh) ---------- */
 const X=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-const P=(t,o={})=>`<w:p><w:pPr>${o.c?'<w:jc w:val="center"/>':''}<w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.i?'<w:i/>':''}${o.col?`<w:color w:val="${o.col}"/>`:''}<w:sz w:val="${o.s||24}"/></w:rPr><w:t xml:space="preserve">${X(t)}</w:t></w:r></w:p>`;
-const TC=(t,w,h)=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${h?'<w:shd w:val="clear" w:color="auto" w:fill="E6DFFF"/>':''}</w:tcPr>${P(t,{b:h,s:22})}</w:tc>`;
-const TBL=(rows,ws)=>`<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>${["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:color="999999"/>`).join("")}</w:tblBorders></w:tblPr>${rows.map((r,i)=>`<w:tr>${r.map((c,j)=>TC(c,ws[j],i===0)).join("")}</w:tr>`).join("")}</w:tbl>`;
+const P=(t,o={})=>`<w:p><w:pPr>${o.c?'<w:jc w:val="center"/>':''}<w:spacing w:after="${o.a??60}"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.i?'<w:i/>':''}${o.col?`<w:color w:val="${o.col}"/>`:''}<w:sz w:val="${o.s||24}"/></w:rPr><w:t xml:space="preserve">${X(t)}</w:t></w:r></w:p>`;
 async function exportDoc(){
   if(!rounds.length)return;
   const dl=window.claude?await claude.use("downloads"):null;
   if(!dl){alert("Chế độ xem hiện tại không hỗ trợ tải file. Hãy mở trang trong claude.ai.");return}
-  const t=TYPES[cur],sport=$("sport").value.trim()||"Môn thi đấu",R=rounds.length,dash="........................";
-  let b=P("LỊCH THI ĐẤU",{b:1,c:1,s:36,col:"7B2FF7"})+P(sport.toUpperCase()+" - "+t.n.toUpperCase(),{b:1,c:1,s:28})+P("Ngày xuất: "+new Date().toLocaleDateString("vi-VN"),{c:1,i:1,s:20});
-  if(pairsList.length){
-    b+=P("Kết quả bốc thăm ghép cặp",{b:1,s:26});
-    const f=pairsList.filter(x=>!x.includes("err")).map(x=>x.replace(/<[^>]+>/g,"").replace(/♂|♀/g,"").replace(" + "," & ").trim());
-    b+=TBL([["STT","Cặp thi đấu (Nam & Nữ)"],...f.map((x,i)=>[String(i+1),x])],[900,8000])+P("");
-  }
-  rounds.forEach((rd,r)=>{
-    if(r===R-1)return;
-    const nm=r===R-2?"Chung kết":r===R-3?"Bán kết":"Vòng "+(r+1);
-    const rows=[["Trận","VĐV / Cặp A","VĐV / Cặp B","Kết quả"]];
-    for(let i=0;i<rd.length;i+=2){
-      rows.push([String(i/2+1),rd[i]||dash,rd[i+1]===undefined?"(Đặc cách vào vòng sau)":(rd[i+1]||dash),""]);
-    }
-    b+=P(nm,{b:1,s:26,col:"FF3D71"})+TBL(rows,[800,3000,3000,2100])+P("");
-  });
-  const champ=rounds[R-1][0];
-  b+=P("VÔ ĐỊCH: "+(champ||dash),{b:1,c:1,s:28,col:"C2410C"})+P("");
-  b+=P("Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh",{c:1,i:1,s:20});
-  const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
-  const zip=new JSZip();
-  zip.file("[Content_Types].xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
-  zip.file("_rels/.rels",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
-  zip.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${W}><w:body>${b}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
-  const slug=sport.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")||"mon-thi";
+  const t=TYPES[cur],sport=$("sport").value.trim()||"Môn thi đấu";
   try{
-    const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-    await dl.save({filename:"Lich-thi-dau-"+slug+"-"+t.n.replace(/\s/g,"-").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d")+".docx",data:blob});
+    const {svg,w,h}=svgBracket(true),S=2;
+    const img=new Image();
+    await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)});
+    const cv=document.createElement("canvas");cv.width=w*S;cv.height=h*S;
+    const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(img,0,0,cv.width,cv.height);
+    const png=await new Promise(ok=>cv.toBlob(ok,"image/png")).then(b=>b.arrayBuffer());
+    const k=Math.min(9700000/w,5300000/h,9525*1.6),ew=Math.round(w*k),eh=Math.round(h*k);
+    const pic=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="60"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${ew}" cy="${eh}"/><wp:docPr id="1" name="Nhanh"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="b.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${ew}" cy="${eh}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+    const body=P("LỊCH THI ĐẤU - "+sport.toUpperCase()+" - "+t.n.toUpperCase(),{b:1,c:1,s:32,col:"7B2FF7"})+P("Ngày xuất: "+new Date().toLocaleDateString("vi-VN"),{c:1,i:1,s:20})+pic+P("Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh",{c:1,i:1,s:18,a:0});
+    const zip=new JSZip();
+    zip.file("[Content_Types].xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+    zip.file("_rels/.rels",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+    zip.file("word/_rels/document.xml.rels",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/b.png"/></Relationships>');
+    zip.file("word/media/b.png",png);
+    zip.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+    const sl=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"");
+    const blob=await zip.generateAsync({type:"blob"});
+    await dl.save({filename:"Lich-thi-dau-"+(sl(sport)||"mon-thi")+"-"+sl(t.n)+".docx",data:blob});
   }catch(e){if(!e||e.code!=="declined")alert("Không tải được file: "+((e&&e.message)||e))}
 }
 renderTypes();renderInputs();
