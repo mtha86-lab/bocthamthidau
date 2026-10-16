@@ -1,272 +1,239 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Match Maker - CĐCS Trường THPT Võ Thị Sáu</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 20px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; border: 4px solid #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.02); opacity: 0.95; } }
-        .animate-pulse-slow { animation: pulse-slow 4s infinite ease-in-out; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bốc thăm thi đấu thể thao</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f1ff;--card:#fff;--tx:#1c1840;--mut:#6b6794;--bd:#e0dcf5;--p1:#ff3d71;--p2:#7b2ff7;--p3:#00c2ff;--nam:#0a84ff;--nu:#ff2d92;--ok:#12b76a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#120f2a;--card:#1d1942;--tx:#f2f0ff;--mut:#a9a4d6;--bd:#34306a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#120f2a;--card:#1d1942;--tx:#f2f0ff;--mut:#a9a4d6;--bd:#34306a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Be Vietnam Pro","Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column}
+header{background:linear-gradient(120deg,var(--p1),var(--p2) 55%,var(--p3));color:#fff;padding:28px 16px 34px;text-align:center}
+header h1{margin:0;font-size:clamp(1.5rem,5vw,2.4rem);letter-spacing:.5px;text-shadow:0 2px 12px #0004}
+header p{margin:6px 0 0;opacity:.92}
+main{flex:1;width:100%;max-width:1100px;margin:-20px auto 0;padding:0 14px 30px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:0 10px 30px #7b2ff726;margin-bottom:16px}
+label{display:block;font-weight:700;margin:0 0 6px;font-size:.92rem}
+input[type=text],textarea{width:100%;padding:11px 13px;border:2px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--p2)}
+textarea{min-height:150px;resize:vertical}
+.types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.types button{flex:1 1 130px;padding:11px 8px;border-radius:12px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
+.types button.on{background:linear-gradient(120deg,var(--p1),var(--p2));color:#fff;border-color:transparent}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.hint{color:var(--mut);font-size:.82rem;margin-top:4px}
+.btn{border:0;border-radius:14px;padding:13px 22px;font:inherit;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(120deg,var(--p1),var(--p2));box-shadow:0 6px 18px #ff3d7155}
+.btn.alt{background:var(--bg);color:var(--tx);border:2px solid var(--bd);box-shadow:none}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+.err{color:var(--p1);font-weight:700}
+h2{margin:0 0 10px;font-size:1.3rem}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;color:#fff;font-size:.8rem;font-weight:700;background:var(--p2)}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:10px 0}
+.pair{padding:9px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--bd);font-weight:600}
+.pair b{color:var(--nam)}.pair i{color:var(--nu);font-style:normal;font-weight:700}
+.bracket{display:flex;gap:22px;overflow-x:auto;padding:6px 2px 14px}
+.round{min-width:220px;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
+.round h3{margin:0;text-align:center;font-size:.95rem;color:var(--p2)}
+.match{border:2px solid var(--bd);border-radius:14px;overflow:hidden;background:var(--bg)}
+.slot{padding:10px 12px;cursor:pointer;font-weight:600;border-bottom:1px solid var(--bd);min-height:42px;display:flex;align-items:center;gap:6px}
+.slot:last-child{border-bottom:0}
+.slot:hover{background:#7b2ff71f}
+.slot.win{background:linear-gradient(120deg,#12b76a,#00c2ff);color:#fff}
+.slot.empty{color:var(--mut);cursor:default;font-weight:400;font-style:italic}
+.slot.bye{color:var(--p1);cursor:default}
+.champ{text-align:center;margin-top:8px;padding:16px;border-radius:16px;background:linear-gradient(120deg,#ffb800,#ff3d71);color:#fff;font-size:1.3rem;font-weight:800}
+footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var(--p2),#3a1d9c);color:#fff;font-weight:600;font-size:.92rem}
+.spin{animation:sp .15s linear infinite}
+@keyframes sp{50%{opacity:.4}}
+@media print{header .hint,.types,.btn,#form{display:none}}
+</style>
 </head>
-<body class="bg-slate-100">
-    <div id="root"></div>
+<body>
+<header>
+  <h1>🏆 BỐC THĂM THI ĐẤU THỂ THAO</h1>
+  <p>Nhập môn thi – chọn nội dung – bốc thăm ngẫu nhiên – ghi nhận kết quả</p>
+</header>
+<main>
+<section class="card" id="form">
+  <label for="sport">Tên môn thi đấu</label>
+  <input type="text" id="sport" placeholder="Ví dụ: Cầu lông, Bóng bàn, Cờ vua...">
+  <label style="margin-top:14px">Loại hình thi đấu</label>
+  <div class="types" id="types"></div>
+  <div class="grid" id="inputs"></div>
+  <div class="row">
+    <button class="btn" id="draw">🎲 BỐC THĂM</button>
+    <button class="btn alt" id="sample">Điền mẫu</button>
+    <button class="btn alt" id="reset">Xóa hết</button>
+    <span class="err" id="err"></span>
+  </div>
+</section>
+<section id="result"></section>
+</main>
+<footer>Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh</footer>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        
-        // Mocking Lucide icons for browser compatibility in single file
-        const Icon = ({ name, size = 20, className = "" }) => {
-            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
-        };
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const TYPES={
+  dn:{n:"Đơn nam",g:"m",t:"single"},
+  dnu:{n:"Đơn nữ",g:"f",t:"single"},
+  den:{n:"Đôi nam",g:"m",t:"pair"},
+  denu:{n:"Đôi nữ",g:"f",t:"pair"},
+  dnn:{n:"Đôi nam nữ",g:"x",t:"mixed"}
+};
+let cur="dn",rounds=[],pairsList=[];
+const $=id=>document.getElementById(id);
+const lines=s=>s.split(/\n/).map(x=>x.trim()).filter(Boolean);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 
-        function App() {
-            const [players, setPlayers] = useState([]); 
-            const [men, setMen] = useState([]); 
-            const [women, setWomen] = useState([]); 
-            const [inputValue, setInputValue] = useState('');
-            const [inputGender, setInputGender] = useState('male');
-            const [matchMode, setMatchMode] = useState('single'); 
-            const [sportName, setSportName] = useState('Giải Đấu Giao Lưu');
-            const [isEditingSport, setIsEditingSport] = useState(false);
-            const [tempSportName, setTempSportName] = useState('Giải Đấu Giao Lưu');
-            const [tournament, setTournament] = useState(null);
-            const [isShuffling, setIsShuffling] = useState(false);
+function renderTypes(){
+  $("types").innerHTML=Object.entries(TYPES).map(([k,v])=>`<button data-k="${k}" class="${k===cur?'on':''}">${v.n}</button>`).join("");
+  $("types").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;renderTypes();renderInputs()});
+}
+function renderInputs(){
+  const t=TYPES[cur];let h="";
+  if(t.t==="single")h=`<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"}</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Mỗi dòng một vận động viên.</div></div>`;
+  if(t.t==="pair")h=`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình\nLê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
+  if(t.t==="mixed")h=`<div><label>♂ Danh sách VĐV NAM</label><textarea id="a" placeholder="Mỗi dòng một tên nam"></textarea></div><div><label>♀ Danh sách VĐV NỮ</label><textarea id="b" placeholder="Mỗi dòng một tên nữ"></textarea></div><div class="hint">Hệ thống sẽ bốc thăm ngẫu nhiên ghép mỗi nam với một nữ thành cặp cố định.</div>`;
+  $("inputs").innerHTML=h;$("err").textContent="";
+}
+const SAMPLE={
+  dn:["Nguyễn Văn An","Trần Quốc Bảo","Lê Minh Cường","Phạm Đức Dũng","Võ Hoàng Em"],
+  dnu:["Nguyễn Thị Hoa","Trần Ngọc Lan","Lê Thu Mai","Phạm Bích Ngọc","Võ Thanh Thảo","Đặng Kim Yến"],
+  den:["An & Bảo","Cường & Dũng","Em & Phúc","Giang & Hải"],
+  denu:["Hoa & Lan","Mai & Ngọc","Thảo & Yến"],
+  dnn:[["An","Bảo","Cường","Dũng"],["Hoa","Lan","Mai","Ngọc"]]
+};
+$("sample").onclick=()=>{
+  if(!$("sport").value)$("sport").value="Cầu lông";
+  const s=SAMPLE[cur];
+  if(cur==="dnn"){$("a").value=s[0].join("\n");$("b").value=s[1].join("\n")}else $("a").value=s.join("\n");
+};
+$("reset").onclick=()=>{$("sport").value="";renderInputs();$("result").innerHTML="";rounds=[]};
 
-            useEffect(() => {
-                lucide.createIcons();
-            }, [tournament, isEditingSport, matchMode, players, men, women]);
-
-            const handleUpdateSportName = (e) => {
-                e.preventDefault();
-                if (tempSportName.trim()) {
-                    setSportName(tempSportName.trim());
-                    setIsEditingSport(false);
-                }
-            };
-
-            const handleAddPlayer = (e) => {
-                e.preventDefault();
-                if (!inputValue.trim()) return;
-                const names = inputValue.split(',').map(name => name.trim()).filter(name => name);
-                
-                if (matchMode === 'double_mix') {
-                    if (inputGender === 'male') {
-                        setMen([...men, ...names.filter(n => !men.includes(n))]);
-                    } else {
-                        setWomen([...women, ...names.filter(n => !women.includes(n))]);
-                    }
-                } else {
-                    setPlayers([...players, ...names.filter(n => !players.includes(n))]);
-                }
-                setInputValue('');
-            };
-
-            const removePlayer = (listType, index) => {
-                if (listType === 'players') {
-                    const newList = [...players];
-                    newList.splice(index, 1);
-                    setPlayers(newList);
-                } else if (listType === 'men') {
-                    const newList = [...men];
-                    newList.splice(index, 1);
-                    setMen(newList);
-                } else {
-                    const newList = [...women];
-                    newList.splice(index, 1);
-                    setWomen(newList);
-                }
-                if (tournament) setTournament(null);
-            };
-
-            const clearAll = () => {
-                if (window.confirm('Xóa toàn bộ dữ liệu?')) {
-                    setPlayers([]); setMen([]); setWomen([]); setTournament(null);
-                }
-            };
-
-            const shuffleArray = (array) => {
-                let newArray = [...array];
-                for (let i = newArray.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-                }
-                return newArray;
-            };
-
-            const generateTournament = () => {
-                const min = matchMode === 'single' ? 2 : 4;
-                if (matchMode !== 'double_mix' && players.length < min) {
-                    alert(`Cần ít nhất ${min} VĐV!`); return;
-                }
-                if (matchMode === 'double_mix' && (men.length < 2 || women.length < 2)) {
-                    alert("Cần ít nhất 2 Nam và 2 Nữ!"); return;
-                }
-
-                setIsShuffling(true);
-                setTimeout(() => {
-                    let participants = [];
-                    if (matchMode === 'single') {
-                        participants = shuffleArray(players).map(p => ({ names: [p] }));
-                    } else if (matchMode === 'double_same') {
-                        const shuffled = shuffleArray(players);
-                        for (let i = 0; i < shuffled.length; i += 2) {
-                            participants.push({ names: i + 1 < shuffled.length ? [shuffled[i], shuffled[i+1]] : [shuffled[i]] });
-                        }
-                    } else if (matchMode === 'double_mix') {
-                        const sMen = shuffleArray(men);
-                        const sWomen = shuffleArray(women);
-                        const pairCount = Math.min(sMen.length, sWomen.length);
-                        for (let i = 0; i < pairCount; i++) participants.push({ names: [sMen[i], sWomen[i]] });
-                        const leftovers = sMen.length > sWomen.length ? sMen.slice(pairCount) : sWomen.slice(pairCount);
-                        leftovers.forEach(p => participants.push({ names: [p] }));
-                    }
-
-                    const rounds = [];
-                    let currentLevelParticipants = [...participants];
-                    let roundNumber = 1;
-
-                    while (currentLevelParticipants.length > 0) {
-                        const matchesInRound = [];
-                        const nextLevelCount = Math.ceil(currentLevelParticipants.length / 2);
-                        for (let i = 0; i < currentLevelParticipants.length; i += 2) {
-                            if (i + 1 < currentLevelParticipants.length) {
-                                matchesInRound.push({ id: `r${roundNumber}-m${i}`, team1: currentLevelParticipants[i].names, team2: currentLevelParticipants[i+1].names });
-                            } else {
-                                matchesInRound.push({ id: `r${roundNumber}-m${i}`, team1: currentLevelParticipants[i].names, team2: ["(Chờ đối thủ)"], status: 'bye' });
-                            }
-                        }
-                        let roundTitle = nextLevelCount === 1 ? "Chung Kết" : nextLevelCount === 2 ? "Bán Kết" : nextLevelCount === 4 ? "Tứ Kết" : `Vòng ${roundNumber}`;
-                        rounds.push({ title: roundTitle, matches: matchesInRound });
-                        if (nextLevelCount <= 1 && currentLevelParticipants.length <= 2) break;
-                        currentLevelParticipants = Array(nextLevelCount).fill(0).map((_, k) => ({ names: [`Thắng trận ${k+1} Vòng ${roundNumber}`] }));
-                        roundNumber++;
-                    }
-                    setTournament({ rounds });
-                    setIsShuffling(false);
-                }, 800);
-            };
-
-            return (
-                <div className="min-h-screen bg-slate-100 text-slate-800 pb-20 p-4 md:p-8">
-                    <div className="max-w-7xl mx-auto">
-                        <header className="text-center mb-8 bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"></div>
-                            <h2 className="text-[10px] md:text-xs font-black text-blue-600 uppercase tracking-[0.4em] mb-3">CĐCS Trường THPT Võ Thị Sáu</h2>
-                            {isEditingSport ? (
-                                <form onSubmit={handleUpdateSportName} className="flex justify-center items-center gap-2 mb-4">
-                                    <input autoFocus type="text" value={tempSportName} onChange={(e) => setTempSportName(e.target.value)} className="text-2xl md:text-4xl font-black text-center border-b-2 border-blue-500 focus:outline-none bg-transparent" />
-                                    <button type="submit" className="bg-blue-600 text-white p-2 rounded-full"><Icon name="plus" /></button>
-                                </form>
-                            ) : (
-                                <div className="group flex justify-center items-center gap-3 mb-4 cursor-pointer" onClick={() => setIsEditingSport(true)}>
-                                    <h1 className="text-2xl md:text-5xl font-black text-slate-900 uppercase italic">{sportName}</h1>
-                                    <Icon name="edit-3" className="text-slate-300 group-hover:text-blue-500" />
-                                </div>
-                            )}
-                            <div className="bg-indigo-50 inline-flex items-center gap-2 px-5 py-2 rounded-full border border-indigo-100 text-indigo-700 text-sm font-black uppercase">
-                                <Icon name={matchMode === 'single' ? "user" : "users"} size={16} />
-                                {matchMode === 'single' ? 'Đơn' : matchMode === 'double_same' ? 'Đôi' : 'Đôi Nam Nữ'}
-                            </div>
-                        </header>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className="lg:col-span-3 space-y-6">
-                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-6">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Tên Môn Thi Đấu</label>
-                                        <div className="flex gap-2">
-                                            <input type="text" value={tempSportName} onChange={(e) => setTempSportName(e.target.value)} className="flex-1 text-xs font-bold p-3 bg-slate-50 border border-slate-200 rounded-xl" />
-                                            <button onClick={() => setSportName(tempSportName)} className="bg-slate-900 text-white px-3 rounded-xl text-[10px] font-black">LƯU</button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-2">Hình thức</label>
-                                        <div className="space-y-2">
-                                            {['single', 'double_same', 'double_mix'].map(mode => (
-                                                <button key={mode} onClick={() => setMatchMode(mode)} className={`w-full py-3 px-4 rounded-xl text-xs font-black border flex items-center gap-3 ${matchMode === mode ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-500'}`}>
-                                                    <Icon name={mode === 'single' ? "user" : "users"} size={16} /> {mode === 'single' ? 'ĐƠN' : mode === 'double_same' ? 'ĐÔI CÙNG GIỚI' : 'ĐÔI NAM NỮ'}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="pt-6 border-t border-slate-100">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase">Vận động viên</span>
-                                            <button onClick={clearAll} className="text-red-400"><Icon name="trash-2" size={18} /></button>
-                                        </div>
-                                        <form onSubmit={handleAddPlayer} className="flex gap-2 mb-4">
-                                            <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Tên VĐV..." className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" />
-                                            <button type="submit" className="bg-blue-600 text-white p-3 rounded-xl"><Icon name="plus" /></button>
-                                        </form>
-                                        <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                                            {(matchMode === 'double_mix' ? [...men, ...women] : players).map((n, i) => (
-                                                <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs font-black">
-                                                    <span>{i+1}. {n}</span>
-                                                    <button onClick={() => removePlayer(matchMode === 'double_mix' ? (men.includes(n) ? 'men' : 'women') : 'players', i)} className="text-red-300"><Icon name="x" size={14} /></button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <button onClick={generateTournament} disabled={isShuffling} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-3">
-                                        <Icon name="shuffle" size={18} className={isShuffling ? "animate-spin" : ""} /> BỐC THĂM
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="lg:col-span-9">
-                                {!tournament ? (
-                                    <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200 h-[600px] flex flex-col items-center justify-center text-slate-300 p-12 text-center">
-                                        <Icon name="trophy" size={48} className="mb-4 opacity-20" />
-                                        <p className="font-black uppercase tracking-widest">Sẵn sàng bốc thăm</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex gap-8 overflow-x-auto pb-10 custom-scrollbar p-6 bg-white rounded-[2.5rem] shadow-sm border border-slate-200 min-h-[600px]">
-                                        {tournament.rounds.map((round, rIdx) => (
-                                            <div key={rIdx} className="w-64 flex-shrink-0">
-                                                <div className="mb-8 flex items-center gap-3 bg-slate-900 text-white p-3 rounded-xl shadow-lg">
-                                                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-xs font-black">{rIdx+1}</div>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">{round.title}</span>
-                                                </div>
-                                                <div className="space-y-8">
-                                                    {round.matches.map((match, mIdx) => (
-                                                        <div key={match.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                                                            <div className="bg-slate-50 px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase">Trận {mIdx+1}</div>
-                                                            <div className="p-4 space-y-3">
-                                                                <div className="font-black text-xs text-slate-700">{match.team1.join(' - ')}</div>
-                                                                <div className="h-px bg-slate-100 relative"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[8px] font-black text-red-500 italic">VS</div></div>
-                                                                <div className={`text-xs ${match.team2[0].includes('(') ? 'text-slate-300 italic' : 'font-black text-slate-700'}`}>{match.team2.join(' - ')}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+function build(entries){
+  rounds=[entries.map(n=>n)];
+  while(rounds[rounds.length-1].length>1){
+    const n=rounds[rounds.length-1].length,next=Array(Math.ceil(n/2)).fill(null);
+    if(n%2===1)next[next.length-1]=rounds[rounds.length-1][n-1]; // đặc cách
+    rounds.push(next);
+  }
+}
+function pick(r,i){
+  const nm=rounds[r][i];if(!nm||r>=rounds.length-1)return;
+  const n=rounds[r].length;if(n%2===1&&i===n-1)return;
+  const ni=Math.floor(i/2);
+  if(rounds[r+1][ni]===nm)return;
+  rounds[r+1][ni]=nm;
+  for(let k=r+2;k<rounds.length;k++){rounds[k]=rounds[k].map(()=>null);} // xoá các vòng sau
+  // giữ lại người được đặc cách ở vòng sau
+  for(let k=r+1;k<rounds.length-1;k++){const n2=rounds[k].length;if(n2%2===1&&k>r+1&&false){}}
+  for(let k=r+1;k<rounds.length-1;k++){const n2=rounds[k].length;if(n2%2===1)rounds[k+1][rounds[k+1].length-1]=rounds[k][n2-1];}
+  show();
+}
+function label(nm){
+  const t=TYPES[cur];
+  if(t.t==="single")return (t.g==="m"?"♂ ":"♀ ")+esc(nm);
+  return esc(nm);
+}
+function show(){
+  const t=TYPES[cur],sport=esc($("sport").value.trim()||"Môn thi đấu");
+  let h=`<div class="card"><h2>${sport} <span class="tag">${t.n}</span></h2>`;
+  if(pairsList.length){
+    h+=`<b>Kết quả bốc thăm ghép cặp:</b><div class="pairs">`+pairsList.map((p,i)=>`<div class="pair">${i+1}. ${p}</div>`).join("")+`</div>`;
+  }
+  h+=`<div class="hint">Nhấn vào tên VĐV/cặp thắng để đưa vào vòng sau.</div><div class="bracket">`;
+  const R=rounds.length;
+  rounds.forEach((rd,r)=>{
+    const nm=r===R-1?"Chung kết ➜ Vô địch":r===R-2&&R>2?"Chung kết":r===R-3&&R>3?"Bán kết":"Vòng "+(r+1);
+    h+=`<div class="round"><h3>${r===R-1?"🏅 Vô địch":(r===R-2?"Chung kết":(r===R-3?"Bán kết":"Vòng "+(r+1)))}</h3>`;
+    if(r===R-1){h+=`<div class="match"><div class="slot ${rd[0]?'win':'empty'}">${rd[0]?label(rd[0]):"Chưa xác định"}</div></div></div>`;return}
+    for(let i=0;i<rd.length;i+=2){
+      const a=rd[i],b=rd[i+1],nx=rounds[r+1][Math.floor(i/2)];
+      const cell=(v,idx)=>v==null?`<div class="slot empty">Chờ kết quả</div>`:`<div class="slot ${nx===v?'win':''}" onclick="pick(${r},${idx})">${label(v)}</div>`;
+      h+=`<div class="match">${cell(a,i)}${b===undefined?`<div class="slot bye">⏭ Đặc cách vào vòng sau</div>`:cell(b,i+1)}</div>`;
+    }
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+  const champ=rounds[R-1][0];
+  if(champ&&R>1)h+=`<div class="champ">🥇 ${label(champ)}</div>`;
+  h+=`<div class="row"><button class="btn" onclick="drawNow()">🔁 Bốc thăm lại</button><button class="btn alt" onclick="exportDoc()">📄 Xuất file Word</button><button class="btn alt" onclick="window.print()">🖨 In lịch thi đấu</button></div></div>`;
+  $("result").innerHTML=h;
+}
+function collect(){
+  const t=TYPES[cur],a=lines($("a").value);
+  pairsList=[];
+  if(t.t==="single"){
+    if(a.length<2)throw "Cần ít nhất 2 vận động viên.";
+    return shuffle(a);
+  }
+  if(t.t==="pair"){
+    const ps=a.map(l=>l.split(/\s*(?:&|\/|\+|\s-\s|–)\s*/).filter(Boolean).join(" & "));
+    if(ps.length<2)throw "Cần ít nhất 2 cặp.";
+    return shuffle(ps);
+  }
+  const b=lines($("b").value),m=shuffle(a),f=shuffle(b),k=Math.min(m.length,f.length);
+  if(k<2)throw "Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
+  const ps=[];
+  for(let i=0;i<k;i++){ps.push(m[i]+" & "+f[i]);pairsList.push(`<b>♂ ${esc(m[i])}</b> + <i>♀ ${esc(f[i])}</i>`)}
+  let w=m.length!==f.length?`Lưu ý: số nam (${m.length}) khác số nữ (${f.length}); ${Math.abs(m.length-f.length)} VĐV không có cặp.`:"";
+  if(w)pairsList.push(`<span class="err">${w}</span>`);
+  return ps;
+}
+function drawNow(){
+  $("err").textContent="";
+  let e;try{e=collect()}catch(x){$("err").textContent=x;return}
+  const btn=$("draw");btn.classList.add("spin");
+  let c=0;const iv=setInterval(()=>{
+    const s=shuffle(e);$("result").innerHTML=`<div class="card"><h2 class="spin">🎲 Đang bốc thăm...</h2><div class="pairs">`+s.slice(0,12).map(x=>`<div class="pair">${esc(x)}</div>`).join("")+`</div></div>`;
+    if(++c>8){clearInterval(iv);btn.classList.remove("spin");build(e);show();$("result").scrollIntoView({behavior:"smooth"})}
+  },110);
+}
+$("draw").onclick=drawNow;
+const X=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const P=(t,o={})=>`<w:p><w:pPr>${o.c?'<w:jc w:val="center"/>':''}<w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${o.b?'<w:b/>':''}${o.i?'<w:i/>':''}${o.col?`<w:color w:val="${o.col}"/>`:''}<w:sz w:val="${o.s||24}"/></w:rPr><w:t xml:space="preserve">${X(t)}</w:t></w:r></w:p>`;
+const TC=(t,w,h)=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${h?'<w:shd w:val="clear" w:color="auto" w:fill="E6DFFF"/>':''}</w:tcPr>${P(t,{b:h,s:22})}</w:tc>`;
+const TBL=(rows,ws)=>`<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>${["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:color="999999"/>`).join("")}</w:tblBorders></w:tblPr>${rows.map((r,i)=>`<w:tr>${r.map((c,j)=>TC(c,ws[j],i===0)).join("")}</w:tr>`).join("")}</w:tbl>`;
+async function exportDoc(){
+  if(!rounds.length)return;
+  const dl=window.claude?await claude.use("downloads"):null;
+  if(!dl){alert("Chế độ xem hiện tại không hỗ trợ tải file. Hãy mở trang trong claude.ai.");return}
+  const t=TYPES[cur],sport=$("sport").value.trim()||"Môn thi đấu",R=rounds.length,dash="........................";
+  let b=P("LỊCH THI ĐẤU",{b:1,c:1,s:36,col:"7B2FF7"})+P(sport.toUpperCase()+" - "+t.n.toUpperCase(),{b:1,c:1,s:28})+P("Ngày xuất: "+new Date().toLocaleDateString("vi-VN"),{c:1,i:1,s:20});
+  if(pairsList.length){
+    b+=P("Kết quả bốc thăm ghép cặp",{b:1,s:26});
+    const f=pairsList.filter(x=>!x.includes("err")).map(x=>x.replace(/<[^>]+>/g,"").replace(/♂|♀/g,"").replace(" + "," & ").trim());
+    b+=TBL([["STT","Cặp thi đấu (Nam & Nữ)"],...f.map((x,i)=>[String(i+1),x])],[900,8000])+P("");
+  }
+  rounds.forEach((rd,r)=>{
+    if(r===R-1)return;
+    const nm=r===R-2?"Chung kết":r===R-3?"Bán kết":"Vòng "+(r+1);
+    const rows=[["Trận","VĐV / Cặp A","VĐV / Cặp B","Kết quả"]];
+    for(let i=0;i<rd.length;i+=2){
+      rows.push([String(i/2+1),rd[i]||dash,rd[i+1]===undefined?"(Đặc cách vào vòng sau)":(rd[i+1]||dash),""]);
+    }
+    b+=P(nm,{b:1,s:26,col:"FF3D71"})+TBL(rows,[800,3000,3000,2100])+P("");
+  });
+  const champ=rounds[R-1][0];
+  b+=P("VÔ ĐỊCH: "+(champ||dash),{b:1,c:1,s:28,col:"C2410C"})+P("");
+  b+=P("Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh",{c:1,i:1,s:20});
+  const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  const zip=new JSZip();
+  zip.file("[Content_Types].xml",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+  zip.file("_rels/.rels",'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  zip.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${W}><w:body>${b}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  const slug=sport.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")||"mon-thi";
+  try{
+    const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+    await dl.save({filename:"Lich-thi-dau-"+slug+"-"+t.n.replace(/\s/g,"-").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d")+".docx",data:blob});
+  }catch(e){if(!e||e.code!=="declined")alert("Không tải được file: "+((e&&e.message)||e))}
+}
+renderTypes();renderInputs();
+</script>
 </body>
 </html>
