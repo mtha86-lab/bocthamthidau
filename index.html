@@ -90,11 +90,12 @@ footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var
 const TYPES={
   dn:{n:"Đơn nam",g:"m",t:"single"},
   dnu:{n:"Đơn nữ",g:"f",t:"single"},
+  dk:{n:"Đơn không phân giới tính",g:"x",t:"single"},
   den:{n:"Đôi nam",g:"m",t:"pair"},
   denu:{n:"Đôi nữ",g:"f",t:"pair"},
   dnn:{n:"Đôi nam nữ",g:"x",t:"mixed"}
 };
-let cur="dn",rounds=[],pairsList=[],byeS="",byeM="",byeF="";
+let cur="dn",rounds=[],pairsList=[],byeS="",byeM="",byeF="",pmode="fixed";
 const $=id=>document.getElementById(id);
 const lines=s=>s.split(/\n/).map(x=>x.trim()).filter(Boolean);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -107,19 +108,47 @@ function renderTypes(){
 }
 function renderInputs(){
   const t=TYPES[cur];let h="";
-  if(t.t==="single")h=`<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"}</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Mỗi dòng một vận động viên.</div></div>`;
-  if(t.t==="pair")h=`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình\nLê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
+  if(t.t==="single")h=`<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":t.g==="f"?"♀ Danh sách VĐV NỮ":"👥 Danh sách VĐV (nam, nữ chung)"}</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Mỗi dòng một vận động viên.</div></div>`;
+  if(t.t==="pair"&&pmode==="rand")h=modeBtns()+randHtml(t);
+  else if(t.t==="pair")h=modeBtns()+`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình\nLê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
   if(t.t==="mixed")h=`<div><label>♂ Danh sách VĐV NAM</label><textarea id="a" placeholder="Mỗi dòng một tên nam"></textarea></div><div><label>♀ Danh sách VĐV NỮ</label><textarea id="b" placeholder="Mỗi dòng một tên nữ"></textarea></div><div class="hint">Hệ thống bốc thăm ngẫu nhiên ghép mỗi nam với một nữ thành cặp cố định.</div>`;
-  $("inputs").innerHTML=h;$("err").textContent="";updBye();
+  $("inputs").innerHTML=h;$("err").textContent="";
+  $("inputs").querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>{pmode=b.dataset.pm;byeS=byeM=byeF="";renderInputs()});
+  updBye();
 }
+function modeBtns(){return `<div style="grid-column:1/-1"><label>Hình thức ghép đôi</label><div class="types" style="margin:0"><button data-pm="fixed" class="${pmode==="fixed"?"on":""}">👥 Đội 2 người cố định</button><button data-pm="rand" class="${pmode==="rand"?"on":""}">🎲 Bốc thăm ghép cặp ngẫu nhiên</button></div></div>`}
+function randHtml(t){return `<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"} (chưa ghép cặp)</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Hệ thống bốc thăm ngẫu nhiên, ghép 2 người thành một đội cố định. Nếu số người lẻ, sẽ còn 1 người chưa có đồng đội.</div></div>`}
+function renderByeR(){
+  const e=entrants();
+  if(!e.p.includes(byeM))byeM="";if(!e.p.includes(byeF)||byeF===byeM)byeF="";
+  $("byeP").innerHTML=`<b>Chọn đội được đặc cách vào vòng sau</b><div class="grid" style="margin-top:8px"><div><label>Người thứ nhất</label><select id="sM">${opts(e.p,byeM)}</select></div><div><label>Người thứ hai</label><select id="sF">${opts(e.p,byeF)}</select></div></div><div class="hint">Hai người được chọn sẽ thành một đội đặc cách. Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn.</div>`;
+  $("sM").onchange=ev=>{byeM=ev.target.value;if(byeF===byeM)byeF="";lbl();renderByeR()};
+  $("sF").onchange=ev=>{byeF=ev.target.value;if(byeF===byeM)byeF="";lbl();renderByeR()};
+}
+function collectRand(e,odd){
+  let P=e.p.slice(),bm=null,bf=null;
+  if(odd&&(byeM||byeF)){
+    bm=P.includes(byeM)?byeM:null;bf=(P.includes(byeF)&&byeF!==bm)?byeF:null;
+    if(bm)P.splice(P.indexOf(bm),1);if(bf)P.splice(P.indexOf(bf),1);
+    P=shuffle(P);if(!bm)bm=P.shift();if(!bf)bf=P.shift();
+  }else P=shuffle(P);
+  const k=bm?e.n-1:e.n,ps=[];
+  for(let i=0;i<k;i++){ps.push(P[2*i]+" & "+P[2*i+1]);pairsList.push(`<b>${esc(P[2*i])}</b> + <b>${esc(P[2*i+1])}</b>`)}
+  if(bm){ps.push(bm+" & "+bf);pairsList.push(`<b>${esc(bm)}</b> + <b>${esc(bf)}</b> ⭐ đặc cách`)}
+  if(e.p.length%2)pairsList.push(`<span class="err">Lưu ý: số VĐV lẻ, ${esc(P[2*k])} chưa có đồng đội.</span>`);
+  return ps;
+}
+const SAMPLE_R={den:["An","Bảo","Cường","Dũng","Em","Phúc","Giang","Hải","Khánh","Long"],denu:["Hoa","Lan","Mai","Ngọc","Thảo","Yến","Oanh","Phương","Quyên"]};
 /* ---------- Đặc cách ---------- */
 function entrants(){
   const t=TYPES[cur],a=lines($("a")?$("a").value:"");
   if(t.t==="mixed"){const f=lines($("b")?$("b").value:"");return{m:a,f,n:Math.min(a.length,f.length)}}
+  if(t.t==="pair"&&pmode==="rand")return{p:a,n:a.length>>1};
   const l=t.t==="pair"?a.map(normPair):a;return{l,n:l.length};
 }
 function opts(list,sel){return `<option value="">🎲 Ngẫu nhiên</option>`+list.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("")}
 function renderBye(){
+  if(TYPES[cur].t==="pair"&&pmode==="rand")return renderByeR();
   const e=entrants(),t=TYPES[cur];
   if(t.t==="mixed"){
     if(!e.m.includes(byeM))byeM="";if(!e.f.includes(byeF))byeF="";
@@ -132,7 +161,7 @@ function renderBye(){
   }
 }
 function lbl(){
-  const t=TYPES[cur],pick=t.t==="mixed"?[byeM,byeF].filter(Boolean).join(" & "):byeS;
+  const t=TYPES[cur],pick=(t.t==="mixed"||(t.t==="pair"&&pmode==="rand"))?[byeM,byeF].filter(Boolean).join(" & "):byeS;
   $("byeBtn").textContent="⭐ VĐV được đặc cách"+(pick?": "+pick:"");
 }
 function updBye(){
@@ -147,6 +176,7 @@ $("inputs").addEventListener("input",updBye);
 
 const SAMPLE={
   dn:["Nguyễn Văn An","Trần Quốc Bảo","Lê Minh Cường","Phạm Đức Dũng","Võ Hoàng Em"],
+  dk:["Nguyễn Văn An","Trần Thị Lan","Lê Minh Cường","Phạm Bích Ngọc","Võ Hoàng Em","Đặng Kim Yến","Hồ Quốc Huy"],
   dnu:["Nguyễn Thị Hoa","Trần Ngọc Lan","Lê Thu Mai","Phạm Bích Ngọc","Võ Thanh Thảo","Đặng Kim Yến"],
   den:["An & Bảo","Cường & Dũng","Em & Phúc","Giang & Hải","Khánh & Long"],
   denu:["Hoa & Lan","Mai & Ngọc","Thảo & Yến"],
@@ -154,7 +184,7 @@ const SAMPLE={
 };
 $("sample").onclick=()=>{
   if(!$("sport").value)$("sport").value="Cầu lông";
-  const s=SAMPLE[cur];
+  const s=(TYPES[cur].t==="pair"&&pmode==="rand")?SAMPLE_R[cur]:SAMPLE[cur];
   if(cur==="dnn"){$("a").value=s[0].join("\n");$("b").value=s[1].join("\n")}else $("a").value=s.join("\n");
   updBye();
 };
@@ -182,12 +212,20 @@ function pick(r,i){
 const cut=(s,n=30)=>s.length>n?s.slice(0,n-1)+"…":s;
 const rname=(r,R)=>r===R-1?"🏆 Vô địch":r===R-2?"Chung kết":r===R-3?"Bán kết":"Vòng "+(r+1);
 function svgBracket(ex){
-  const C=ex?{bg:"#fff",box:"#fff",bd:"#b9b2e0",tx:"#1c1840",mut:"#8a86b0",ln:"#7b2fF7",win:"#12b76a",hd:"#ff3d71"}
+  const C=ex?{bg:"#fff",box:"#fff",bd:"#b9b2e0",tx:"#1c1840",mut:"#8a86b0",ln:"#7b2ff7",win:"#12b76a",hd:"#ff3d71"}
             :{bg:"none",box:"var(--bg)",bd:"var(--bd)",tx:"var(--tx)",mut:"var(--mut)",ln:"var(--p2)",win:"var(--ok)",hd:"var(--p1)"};
-  const W=250,H=30,G=56,TOP=40,R=rounds.length;
-  const cs=[rounds[0].map((_,i)=>TOP+H/2+i*(H+6)+Math.floor(i/2)*18)];
+  const D=TYPES[cur].t!=="single",R=rounds.length;
+  const parts=v=>{if(!D)return[v];const p=v.split(" & ");return p.length>2?[p[0],p.slice(1).join(" & ")]:p};
+  let mx=0;rounds.forEach(rd=>rd.forEach(v=>{if(v)parts(v).forEach(p=>{mx=Math.max(mx,p.length)})}));
+  const W=Math.max(190,Math.ceil(mx*7.6)+44),H=D?46:30,G=56,TOP=40,GAP=D?8:6;
+  const cs=[rounds[0].map((_,i)=>TOP+H/2+i*(H+GAP)+Math.floor(i/2)*18)];
   for(let r=1;r<R;r++)cs[r]=rounds[r].map((_,j)=>{const a=cs[r-1][2*j],b=cs[r-1][2*j+1];return b===undefined?a:(a+b)/2});
   const w=R*(W+G)-G+8,h=cs[0][cs[0].length-1]+H/2+14;
+  const txt=(x,cy,v,fill,bold,pre)=>{
+    const p=parts(v),fw=bold?' font-weight="700"':"";
+    if(p.length===1)return `<text x="${x+10}" y="${cy+4.5}" fill="${fill}"${fw}>${pre}${esc(p[0])}</text>`;
+    return `<text x="${x+10}" y="${cy-4}" fill="${fill}"${fw}>${pre}${esc(p[0])}</text><text x="${x+10}" y="${cy+13}" fill="${fill}"${fw}>${esc(p[1])}</text>`;
+  };
   let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Arial,Helvetica,sans-serif" font-size="13">`;
   if(ex)s+=`<rect width="${w}" height="${h}" fill="#fff"/>`;
   for(let r=0;r<R;r++){
@@ -195,20 +233,20 @@ function svgBracket(ex){
     s+=`<text x="${x+W/2}" y="22" text-anchor="middle" font-weight="700" font-size="15" fill="${C.hd}">${rname(r,R)}</text>`;
     if(r===R-1){
       const v=rd[0],y=cs[r][0]-H/2;
-      s+=`<rect x="${x}" y="${y-4}" width="${W}" height="${H+8}" rx="10" fill="${v?"#ffb800":C.box}" stroke="#ff9f1c" stroke-width="2"/><text x="${x+W/2}" y="${cs[r][0]+5}" text-anchor="middle" font-weight="700" fill="${v?"#fff":C.mut}">${v?"🏆 "+esc(cut(v,26)):"Chưa xác định"}</text>`;
+      s+=`<rect x="${x}" y="${y-4}" width="${W}" height="${H+8}" rx="10" fill="${v?"#ffb800":C.box}" stroke="#ff9f1c" stroke-width="2"/>`+(v?txt(x,cs[r][0],v,"#fff",1,"🏆 "):`<text x="${x+W/2}" y="${cs[r][0]+5}" text-anchor="middle" fill="${C.mut}">Chưa xác định</text>`);
       continue;
     }
     const n=rd.length,nx=x+W+G;
     for(let j=0;j<rounds[r+1].length;j++){
-      const a=2*j,b=2*j+1,mx=x+W+G/2;let d=`M${x+W} ${cs[r][a]}H${mx}`;
-      if(b<n)d+=`M${x+W} ${cs[r][b]}H${mx}M${mx} ${cs[r][a]}V${cs[r][b]}`;
-      d+=`M${mx} ${cs[r+1][j]}H${nx}`;
+      const a=2*j,b=2*j+1,mxp=x+W+G/2;let d=`M${x+W} ${cs[r][a]}H${mxp}`;
+      if(b<n)d+=`M${x+W} ${cs[r][b]}H${mxp}M${mxp} ${cs[r][a]}V${cs[r][b]}`;
+      d+=`M${mxp} ${cs[r+1][j]}H${nx}`;
       s+=`<path d="${d}" fill="none" stroke="${C.ln}" stroke-width="1.6"/>`;
     }
     rd.forEach((v,i)=>{
       const bye=n%2===1&&i===n-1,win=v&&!bye&&rounds[r+1][i>>1]===v,y=cs[r][i]-H/2,can=v&&!bye&&!ex;
       s+=`<g class="slotg" ${can?`style="cursor:pointer" onclick="pick(${r},${i})"`:""}><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="8" fill="${win?C.win:C.box}" stroke="${bye?"#ff9f1c":C.bd}" stroke-width="${bye?2:1.5}" ${bye?'stroke-dasharray="5 3"':""}/>`+
-        `<text x="${x+10}" y="${y+H/2+4.5}" fill="${win?"#fff":v?C.tx:C.mut}" ${win?'font-weight="700"':""}>${v?(bye?"⭐ ":"")+esc(cut(v,bye?27:30)):"· · ·"}</text></g>`;
+        (v?txt(x,cs[r][i],v,win?"#fff":C.tx,win,bye?"⭐ ":""):`<text x="${x+10}" y="${cs[r][i]+4.5}" fill="${C.mut}">· · ·</text>`)+`</g>`;
     });
   }
   return{svg:s+"</svg>",w,h};
@@ -224,8 +262,9 @@ function show(){
 }
 function collect(){
   const t=TYPES[cur],e=entrants();pairsList=[];
-  if(e.n<2)throw t.t==="single"?"Cần ít nhất 2 vận động viên.":t.t==="pair"?"Cần ít nhất 2 cặp.":"Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
+  if(e.n<2)throw t.t==="single"?"Cần ít nhất 2 vận động viên.":t.t==="pair"?(pmode==="rand"?"Cần ít nhất 4 VĐV để ghép thành 2 đội.":"Cần ít nhất 2 cặp."):"Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
   const odd=e.n%2===1;
+  if(t.t==="pair"&&pmode==="rand")return collectRand(e,odd);
   if(t.t!=="mixed"){
     let arr=e.l;
     if(odd&&byeS&&arr.includes(byeS)){const k=arr.indexOf(byeS);const rest=shuffle(arr.filter((_,i)=>i!==k));return rest.concat([byeS])}
@@ -260,7 +299,7 @@ const P=(t,o={})=>`<w:p><w:pPr>${o.c?'<w:jc w:val="center"/>':''}<w:spacing w:af
 async function exportDoc(){
   if(!rounds.length)return;
   const dl=window.claude?await claude.use("downloads"):null;
-  if(!dl){alert("Chế độ xem hiện tại không hỗ trợ tải file. Hãy mở trang trong claude.ai.");return}
+  
   const t=TYPES[cur],sport=$("sport").value.trim()||"Môn thi đấu";
   try{
     const {svg,w,h}=svgBracket(true),S=2;
@@ -279,8 +318,10 @@ async function exportDoc(){
     zip.file("word/media/b.png",png);
     zip.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`);
     const sl=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"");
-    const blob=await zip.generateAsync({type:"blob"});
-    await dl.save({filename:"Lich-thi-dau-"+(sl(sport)||"mon-thi")+"-"+sl(t.n)+".docx",data:blob});
+    const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+    const fn="Lich-thi-dau-"+(sl(sport)||"mon-thi")+"-"+sl(t.n)+".docx";
+    if(dl)await dl.save({filename:fn,data:blob});
+    else{const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
   }catch(e){if(!e||e.code!=="declined")alert("Không tải được file: "+((e&&e.message)||e))}
 }
 renderTypes();renderInputs();
