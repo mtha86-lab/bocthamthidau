@@ -44,6 +44,12 @@ h2{margin:0 0 10px;font-size:1.3rem}
 footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var(--p2),#3a1d9c);color:#fff;font-weight:600;font-size:.92rem}
 .spin{animation:sp .15s linear infinite}
 @keyframes sp{50%{opacity:.4}}
+.ckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;max-height:240px;overflow:auto;margin-top:8px}
+.ck{display:flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--bd);border-radius:10px;font-weight:600;font-size:.9rem;margin:0;cursor:pointer}
+.ck input{width:auto;margin:0}
+.brow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:8px}
+.sm{padding:8px 14px;box-shadow:none;margin-top:8px}
+.info{background:var(--bg);border:1px dashed #ff9f1c;border-radius:12px;padding:9px 12px;font-size:.9rem;margin:6px 0 10px}
 @media print{
  @page{size:A4 landscape;margin:8mm}
  :root,:root[data-theme="dark"]{--bg:#fff!important;--card:#fff!important;--tx:#1c1840!important;--mut:#6b6794!important;--bd:#b9b2e0!important;color-scheme:light!important}
@@ -79,7 +85,7 @@ footer{text-align:center;padding:18px 12px;background:linear-gradient(120deg,var
     <button class="btn alt" id="reset">Xóa hết</button>
     <span class="err" id="err"></span>
   </div>
-  <div class="hint" id="byeHint">Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) là số lẻ.</div>
+  <div class="hint" id="byeHint">Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) không phải 2, 4, 8, 16, 32... (cần vòng sơ loại).</div>
   <div id="byeP" hidden></div>
 </section>
 <section id="result"></section>
@@ -95,50 +101,34 @@ const TYPES={
   denu:{n:"Đôi nữ",g:"f",t:"pair"},
   dnn:{n:"Đôi nam nữ",g:"x",t:"mixed"}
 };
-let cur="dn",rounds=[],pairsList=[],byeS="",byeM="",byeF="",pmode="fixed";
+let cur="dn",rounds=[],units=[],meta={},pairsList=[],directSel=[],directRows=[],pmode="fixed";
 const $=id=>document.getElementById(id);
 const lines=s=>s.split(/\n/).map(x=>x.trim()).filter(Boolean);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const normPair=l=>l.split(/\s*(?:&|\/|\+|\s-\s|–)\s*/).filter(Boolean).join(" & ");
+const p2=n=>{let p=1;while(p*2<=n)p*=2;return p};
+const calc=n=>{const N=p2(n);return{N,m:n-N,D:N===n?0:2*N-n}};
+const isPM=()=>{const t=TYPES[cur];return t.t==="mixed"||(t.t==="pair"&&pmode==="rand")};
+const uname=()=>TYPES[cur].t==="single"?"VĐV":"cặp";
+const resetSel=()=>{directSel=[];directRows=[]};
 
 function renderTypes(){
   $("types").innerHTML=Object.entries(TYPES).map(([k,v])=>`<button data-k="${k}" class="${k===cur?'on':''}">${v.n}</button>`).join("");
-  $("types").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;byeS=byeM=byeF="";renderTypes();renderInputs()});
+  $("types").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;resetSel();renderTypes();renderInputs()});
 }
+function modeBtns(){return `<div style="grid-column:1/-1"><label>Hình thức ghép đôi</label><div class="types" style="margin:0"><button data-pm="fixed" class="${pmode==="fixed"?"on":""}">👥 Đội 2 người cố định</button><button data-pm="rand" class="${pmode==="rand"?"on":""}">🎲 Bốc thăm ghép cặp ngẫu nhiên</button></div></div>`}
+function randHtml(t){return `<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"} (chưa ghép cặp)</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Hệ thống bốc thăm ngẫu nhiên, ghép 2 người thành một đội cố định. Nếu số người lẻ, sẽ còn 1 người chưa có đồng đội.</div></div>`}
 function renderInputs(){
   const t=TYPES[cur];let h="";
   if(t.t==="single")h=`<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":t.g==="f"?"♀ Danh sách VĐV NỮ":"👥 Danh sách VĐV (nam, nữ chung)"}</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Mỗi dòng một vận động viên.</div></div>`;
   if(t.t==="pair"&&pmode==="rand")h=modeBtns()+randHtml(t);
-  else if(t.t==="pair")h=modeBtns()+`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình\nLê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
+  else if(t.t==="pair")h=modeBtns()+`<div><label>${t.g==="m"?"♂ Các cặp NAM":"♀ Các cặp NỮ"} (cặp cố định)</label><textarea id="a" placeholder="Nguyễn An & Trần Bình&#10;Lê Cường & Phạm Dũng"></textarea><div class="hint">Mỗi dòng một cặp, ngăn cách bằng dấu &amp; hoặc /</div></div>`;
   if(t.t==="mixed")h=`<div><label>♂ Danh sách VĐV NAM</label><textarea id="a" placeholder="Mỗi dòng một tên nam"></textarea></div><div><label>♀ Danh sách VĐV NỮ</label><textarea id="b" placeholder="Mỗi dòng một tên nữ"></textarea></div><div class="hint">Hệ thống bốc thăm ngẫu nhiên ghép mỗi nam với một nữ thành cặp cố định.</div>`;
   $("inputs").innerHTML=h;$("err").textContent="";
-  $("inputs").querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>{pmode=b.dataset.pm;byeS=byeM=byeF="";renderInputs()});
+  $("inputs").querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>{pmode=b.dataset.pm;resetSel();renderInputs()});
   updBye();
 }
-function modeBtns(){return `<div style="grid-column:1/-1"><label>Hình thức ghép đôi</label><div class="types" style="margin:0"><button data-pm="fixed" class="${pmode==="fixed"?"on":""}">👥 Đội 2 người cố định</button><button data-pm="rand" class="${pmode==="rand"?"on":""}">🎲 Bốc thăm ghép cặp ngẫu nhiên</button></div></div>`}
-function randHtml(t){return `<div><label>${t.g==="m"?"♂ Danh sách VĐV NAM":"♀ Danh sách VĐV NỮ"} (chưa ghép cặp)</label><textarea id="a" placeholder="Mỗi dòng một tên"></textarea><div class="hint">Hệ thống bốc thăm ngẫu nhiên, ghép 2 người thành một đội cố định. Nếu số người lẻ, sẽ còn 1 người chưa có đồng đội.</div></div>`}
-function renderByeR(){
-  const e=entrants();
-  if(!e.p.includes(byeM))byeM="";if(!e.p.includes(byeF)||byeF===byeM)byeF="";
-  $("byeP").innerHTML=`<b>Chọn đội được đặc cách vào vòng sau</b><div class="grid" style="margin-top:8px"><div><label>Người thứ nhất</label><select id="sM">${opts(e.p,byeM)}</select></div><div><label>Người thứ hai</label><select id="sF">${opts(e.p,byeF)}</select></div></div><div class="hint">Hai người được chọn sẽ thành một đội đặc cách. Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn.</div>`;
-  $("sM").onchange=ev=>{byeM=ev.target.value;if(byeF===byeM)byeF="";lbl();renderByeR()};
-  $("sF").onchange=ev=>{byeF=ev.target.value;if(byeF===byeM)byeF="";lbl();renderByeR()};
-}
-function collectRand(e,odd){
-  let P=e.p.slice(),bm=null,bf=null;
-  if(odd&&(byeM||byeF)){
-    bm=P.includes(byeM)?byeM:null;bf=(P.includes(byeF)&&byeF!==bm)?byeF:null;
-    if(bm)P.splice(P.indexOf(bm),1);if(bf)P.splice(P.indexOf(bf),1);
-    P=shuffle(P);if(!bm)bm=P.shift();if(!bf)bf=P.shift();
-  }else P=shuffle(P);
-  const k=bm?e.n-1:e.n,ps=[];
-  for(let i=0;i<k;i++){ps.push(P[2*i]+" & "+P[2*i+1]);pairsList.push(`<b>${esc(P[2*i])}</b> + <b>${esc(P[2*i+1])}</b>`)}
-  if(bm){ps.push(bm+" & "+bf);pairsList.push(`<b>${esc(bm)}</b> + <b>${esc(bf)}</b> ⭐ đặc cách`)}
-  if(e.p.length%2)pairsList.push(`<span class="err">Lưu ý: số VĐV lẻ, ${esc(P[2*k])} chưa có đồng đội.</span>`);
-  return ps;
-}
-const SAMPLE_R={den:["An","Bảo","Cường","Dũng","Em","Phúc","Giang","Hải","Khánh","Long"],denu:["Hoa","Lan","Mai","Ngọc","Thảo","Yến","Oanh","Phương","Quyên"]};
 /* ---------- Đặc cách ---------- */
 function entrants(){
   const t=TYPES[cur],a=lines($("a")?$("a").value:"");
@@ -146,71 +136,97 @@ function entrants(){
   if(t.t==="pair"&&pmode==="rand")return{p:a,n:a.length>>1};
   const l=t.t==="pair"?a.map(normPair):a;return{l,n:l.length};
 }
-function opts(list,sel){return `<option value="">🎲 Ngẫu nhiên</option>`+list.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("")}
+const opts=(list,sel)=>`<option value="">🎲 Ngẫu nhiên</option>`+list.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("");
 function renderBye(){
-  if(TYPES[cur].t==="pair"&&pmode==="rand")return renderByeR();
-  const e=entrants(),t=TYPES[cur];
-  if(t.t==="mixed"){
-    if(!e.m.includes(byeM))byeM="";if(!e.f.includes(byeF))byeF="";
-    $("byeP").innerHTML=`<b>Chọn cặp được đặc cách vào vòng sau</b><div class="grid" style="margin-top:8px"><div><label>♂ Nam</label><select id="sM">${opts(e.m,byeM)}</select></div><div><label>♀ Nữ</label><select id="sF">${opts(e.f,byeF)}</select></div></div><div class="hint">Nam và nữ được chọn sẽ ghép thành cặp được đặc cách. Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn.</div>`;
-    $("sM").onchange=ev=>{byeM=ev.target.value;lbl()};$("sF").onchange=ev=>{byeF=ev.target.value;lbl()};
+  const e=entrants(),{N,m,D}=calc(e.n),p=$("byeP");
+  if(!isPM()){
+    directSel=directSel.filter(x=>e.l.includes(x)).slice(0,D);
+    const full=directSel.length>=D;
+    p.innerHTML=`<b>Chọn tối đa ${D} ${uname()} được đặc cách vào thẳng vòng sau</b> <span id="byeCnt" class="tag">${directSel.length}/${D}</span><div class="ckgrid">`+e.l.map((x,i)=>{const on=directSel.includes(x);return `<label class="ck"><input type="checkbox" data-i="${i}" ${on?"checked":""} ${!on&&full?"disabled":""}> ${esc(x)}</label>`}).join("")+`</div><button class="btn alt sm" data-clr="1">Bỏ chọn hết</button><div class="hint">Những ${uname()} còn lại được bốc thăm ngẫu nhiên vào vòng sơ loại. Nếu chọn chưa đủ ${D}, hệ thống bốc thăm thêm.</div>`;
   }else{
-    if(!e.l.includes(byeS))byeS="";
-    $("byeP").innerHTML=`<b>Chọn ${t.t==="pair"?"cặp":"VĐV"} được đặc cách vào vòng sau</b><div style="margin-top:8px"><select id="sS">${opts(e.l,byeS)}</select></div><div class="hint">Để "Ngẫu nhiên" nếu muốn hệ thống tự chọn khi bốc thăm.</div>`;
-    $("sS").onchange=ev=>{byeS=ev.target.value;lbl()};
+    const t=TYPES[cur],A=t.t==="mixed"?e.m:e.p,B=t.t==="mixed"?e.f:e.p;
+    directRows=directRows.slice(0,D);
+    p.innerHTML=`<b>Chỉ định tối đa ${D} cặp được đặc cách vào thẳng vòng sau</b><div class="hint">${t.t==="mixed"?"♂ Nam  |  ♀ Nữ":"Người thứ nhất  |  Người thứ hai"} – để "Ngẫu nhiên" nếu muốn hệ thống tự chọn.</div>`+
+      directRows.map((r,i)=>`<div class="brow"><select data-i="${i}" data-k="a">${opts(A,r.a)}</select><select data-i="${i}" data-k="b">${opts(B,r.b)}</select><button class="btn alt sm" style="margin:0" data-del="${i}">✕</button></div>`).join("")+
+      `<button class="btn alt sm" data-add="1" ${directRows.length>=D?"disabled":""}>＋ Thêm cặp đặc cách</button>`;
   }
 }
-function lbl(){
-  const t=TYPES[cur],pick=(t.t==="mixed"||(t.t==="pair"&&pmode==="rand"))?[byeM,byeF].filter(Boolean).join(" & "):byeS;
-  $("byeBtn").textContent="⭐ VĐV được đặc cách"+(pick?": "+pick:"");
-}
+function selCount(){return isPM()?directRows.filter(r=>r.a||r.b).length:directSel.length}
+function lbl(){const k=selCount();$("byeBtn").textContent="⭐ VĐV được đặc cách"+(k?` (${k})`:"")}
 function updBye(){
-  const e=entrants(),odd=e.n>=3&&e.n%2===1;
-  $("byeBtn").disabled=!odd;
-  $("byeHint").textContent=odd?`Có ${e.n} ${TYPES[cur].t==="single"?"VĐV":"cặp"} (số lẻ) – nhấn "VĐV được đặc cách" để chỉ định người vào thẳng vòng sau.`:'Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) là số lẻ.';
-  if(!odd){byeS=byeM=byeF="";$("byeP").hidden=true}else if(!$("byeP").hidden)renderBye();
+  const e=entrants(),n=e.n,{N,m,D}=calc(n),ok=n>=3&&m>0;
+  $("byeBtn").disabled=!ok;
+  $("byeHint").textContent=ok?`Có ${n} ${uname()}: ${2*m} ${uname()} (${m} trận) đấu vòng sơ loại, ${D} ${uname()} được đặc cách vào thẳng vòng ${N} ${uname()}. Nhấn "VĐV được đặc cách" để chỉ định ai được đặc cách.`:'Nút "VĐV được đặc cách" chỉ sáng lên khi số lượng VĐV (hoặc số cặp) không phải 2, 4, 8, 16, 32... (cần vòng sơ loại).';
+  if(!ok){resetSel();$("byeP").hidden=true}else if(!$("byeP").hidden)renderBye();
   lbl();
 }
 $("byeBtn").onclick=()=>{const p=$("byeP");p.hidden=!p.hidden;if(!p.hidden)renderBye()};
+$("byeP").addEventListener("change",ev=>{
+  const el=ev.target,e=entrants(),{D}=calc(e.n);
+  if(el.type==="checkbox"){
+    const bx=[...$("byeP").querySelectorAll("input[type=checkbox]")];
+    directSel=bx.filter(b=>b.checked).map(b=>e.l[+b.dataset.i]);
+    bx.forEach(b=>b.disabled=!b.checked&&directSel.length>=D);
+    $("byeCnt").textContent=directSel.length+"/"+D;
+  }else if(el.tagName==="SELECT"){directRows[+el.dataset.i][el.dataset.k]=el.value}
+  lbl();
+});
+$("byeP").addEventListener("click",ev=>{
+  const b=ev.target.closest("button");if(!b)return;
+  if(b.dataset.add){directRows.push({a:"",b:""})}
+  else if(b.dataset.del!==undefined){directRows.splice(+b.dataset.del,1)}
+  else if(b.dataset.clr){directSel=[]}
+  renderBye();lbl();
+});
 $("inputs").addEventListener("input",updBye);
 
-const SAMPLE={
-  dn:["Nguyễn Văn An","Trần Quốc Bảo","Lê Minh Cường","Phạm Đức Dũng","Võ Hoàng Em"],
-  dk:["Nguyễn Văn An","Trần Thị Lan","Lê Minh Cường","Phạm Bích Ngọc","Võ Hoàng Em","Đặng Kim Yến","Hồ Quốc Huy"],
-  dnu:["Nguyễn Thị Hoa","Trần Ngọc Lan","Lê Thu Mai","Phạm Bích Ngọc","Võ Thanh Thảo","Đặng Kim Yến"],
-  den:["An & Bảo","Cường & Dũng","Em & Phúc","Giang & Hải","Khánh & Long"],
-  denu:["Hoa & Lan","Mai & Ngọc","Thảo & Yến"],
-  dnn:[["An","Bảo","Cường","Dũng","Em"],["Hoa","Lan","Mai","Ngọc","Oanh"]]
-};
+const PM=["Nguyễn Văn An","Trần Quốc Bảo","Lê Minh Cường","Phạm Đức Dũng","Võ Hoàng Em","Đặng Văn Phúc","Hồ Quốc Huy","Bùi Thanh Khoa","Đỗ Gia Long","Ngô Minh Nhật","Dương Tuấn Kiệt","Lý Hữu Phước"];
+const PF=["Nguyễn Thị Hoa","Trần Ngọc Lan","Lê Thu Mai","Phạm Bích Ngọc","Võ Thanh Thảo","Đặng Kim Yến","Hồ Mỹ Linh","Bùi Khánh Vy","Đỗ Ngọc Trâm","Ngô Thu Hà","Dương Phương Anh","Lý Bảo Châu"];
+const couples=(L,k)=>Array.from({length:k},(_,i)=>L[2*i]+" & "+L[2*i+1]);
+function sample(){
+  const t=TYPES[cur];
+  if(cur==="dn")return[PM.slice(0,9)];
+  if(cur==="dnu")return[PF.slice(0,6)];
+  if(cur==="dk")return[[PM[0],PF[0],PM[1],PF[1],PM[2],PF[2],PM[3]]];
+  if(cur==="dnn")return[PM.slice(0,5),PF.slice(0,5)];
+  const L=cur==="den"?PM:PF;
+  return pmode==="rand"?[L.slice(0,cur==="den"?10:12)]:[couples(L,cur==="den"?5:6)];
+}
 $("sample").onclick=()=>{
   if(!$("sport").value)$("sport").value="Cầu lông";
-  const s=(TYPES[cur].t==="pair"&&pmode==="rand")?SAMPLE_R[cur]:SAMPLE[cur];
-  if(cur==="dnn"){$("a").value=s[0].join("\n");$("b").value=s[1].join("\n")}else $("a").value=s.join("\n");
+  const s=sample();$("a").value=s[0].join("\n");if(s[1])$("b").value=s[1].join("\n");
   updBye();
 };
-$("reset").onclick=()=>{$("sport").value="";byeS=byeM=byeF="";renderInputs();$("result").innerHTML="";rounds=[]};
+$("reset").onclick=()=>{$("sport").value="";resetSel();renderInputs();$("result").innerHTML="";rounds=[]};
 
-/* ---------- Sơ đồ ---------- */
-function build(entries){
-  rounds=[entries.slice()];
-  while(rounds[rounds.length-1].length>1){
-    const p=rounds[rounds.length-1],n=p.length,next=Array(Math.ceil(n/2)).fill(null);
-    if(n%2===1)next[next.length-1]=p[n-1];
-    rounds.push(next);
-  }
+/* ---------- Xếp nhánh theo công thức X = (A − 2^n) × 2 ---------- */
+function build(order){
+  const {N,m,D}=calc(order.length),A=order.length,mt=Math.ceil(m/2),mb=m-mt;
+  meta={A,N,m,D,mt,mb,X:2*m};
+  units=[m?[...Array(mt).fill(2),...Array(D).fill(1),...Array(mb).fill(2)]:Array(A/2).fill(2)];
+  const first=Array(units[0].length).fill(null);let pos=0;
+  units[0].forEach((len,u)=>{if(len===1)first[u]=order[pos];pos+=len});
+  rounds=[order.slice(),first];
+  while(rounds[rounds.length-1].length>1){const l=rounds[rounds.length-1].length;units.push(Array(l/2).fill(2));rounds.push(Array(l/2).fill(null))}
 }
 function pick(r,i){
-  const nm=rounds[r][i],R=rounds.length;
-  if(!nm||r>=R-1)return;
-  const n=rounds[r].length;if(n%2===1&&i===n-1)return;
-  const ni=i>>1;if(rounds[r+1][ni]===nm)return;
-  rounds[r+1][ni]=nm;
+  const R=rounds.length;if(r>=R-1)return;
+  const nm=rounds[r][i];if(!nm)return;
+  let pos=0,u=0;for(;u<units[r].length;u++){if(i<pos+units[r][u])break;pos+=units[r][u]}
+  if(units[r][u]===1||rounds[r+1][u]===nm)return;
+  rounds[r+1][u]=nm;
   for(let k=r+2;k<R;k++)rounds[k]=rounds[k].map(()=>null);
-  for(let k=r+1;k<R-1;k++){const n2=rounds[k].length;if(n2%2===1)rounds[k+1][rounds[k+1].length-1]=rounds[k][n2-1]}
   show();
 }
-const cut=(s,n=30)=>s.length>n?s.slice(0,n-1)+"…":s;
-const rname=(r,R)=>r===R-1?"🏆 Vô địch":r===R-2?"Chung kết":r===R-3?"Bán kết":"Vòng "+(r+1);
+function rname(r){
+  const L=rounds[r].length;
+  if(r===0&&meta.m>0)return"Vòng sơ loại";
+  if(L===1)return"🏆 Vô địch";
+  if(L===2)return"Chung kết";
+  if(L===4)return"Bán kết";
+  if(L===8)return"Tứ kết";
+  return"Vòng 1/"+(L/2);
+}
 function svgBracket(ex){
   const C=ex?{bg:"#fff",box:"#fff",bd:"#b9b2e0",tx:"#1c1840",mut:"#8a86b0",ln:"#7b2ff7",win:"#12b76a",hd:"#ff3d71"}
             :{bg:"none",box:"var(--bg)",bd:"var(--bd)",tx:"var(--tx)",mut:"var(--mut)",ln:"var(--p2)",win:"var(--ok)",hd:"var(--p1)"};
@@ -218,8 +234,9 @@ function svgBracket(ex){
   const parts=v=>{if(!D)return[v];const p=v.split(" & ");return p.length>2?[p[0],p.slice(1).join(" & ")]:p};
   let mx=0;rounds.forEach(rd=>rd.forEach(v=>{if(v)parts(v).forEach(p=>{mx=Math.max(mx,p.length)})}));
   const W=Math.max(190,Math.ceil(mx*7.6)+44),H=D?46:30,G=56,TOP=40,GAP=D?8:6;
-  const cs=[rounds[0].map((_,i)=>TOP+H/2+i*(H+GAP)+Math.floor(i/2)*18)];
-  for(let r=1;r<R;r++)cs[r]=rounds[r].map((_,j)=>{const a=cs[r-1][2*j],b=cs[r-1][2*j+1];return b===undefined?a:(a+b)/2});
+  const cs=[[]];let y=TOP+H/2;
+  units[0].forEach(len=>{for(let k=0;k<len;k++){cs[0].push(y);y+=H+GAP}y+=18});
+  for(let r=1;r<R;r++){cs[r]=[];let pos=0;units[r-1].forEach(len=>{const sl=cs[r-1].slice(pos,pos+len);cs[r].push(sl.reduce((a,b)=>a+b,0)/len);pos+=len})}
   const w=R*(W+G)-G+8,h=cs[0][cs[0].length-1]+H/2+14;
   const txt=(x,cy,v,fill,bold,pre)=>{
     const p=parts(v),fw=bold?' font-weight="700"':"";
@@ -230,57 +247,84 @@ function svgBracket(ex){
   if(ex)s+=`<rect width="${w}" height="${h}" fill="#fff"/>`;
   for(let r=0;r<R;r++){
     const x=4+r*(W+G),rd=rounds[r];
-    s+=`<text x="${x+W/2}" y="22" text-anchor="middle" font-weight="700" font-size="15" fill="${C.hd}">${rname(r,R)}</text>`;
+    s+=`<text x="${x+W/2}" y="22" text-anchor="middle" font-weight="700" font-size="15" fill="${C.hd}">${rname(r)}</text>`;
     if(r===R-1){
-      const v=rd[0],y=cs[r][0]-H/2;
-      s+=`<rect x="${x}" y="${y-4}" width="${W}" height="${H+8}" rx="10" fill="${v?"#ffb800":C.box}" stroke="#ff9f1c" stroke-width="2"/>`+(v?txt(x,cs[r][0],v,"#fff",1,"🏆 "):`<text x="${x+W/2}" y="${cs[r][0]+5}" text-anchor="middle" fill="${C.mut}">Chưa xác định</text>`);
+      const v=rd[0],yy=cs[r][0]-H/2;
+      s+=`<rect x="${x}" y="${yy-4}" width="${W}" height="${H+8}" rx="10" fill="${v?"#ffb800":C.box}" stroke="#ff9f1c" stroke-width="2"/>`+(v?txt(x,cs[r][0],v,"#fff",1,"🏆 "):`<text x="${x+W/2}" y="${cs[r][0]+5}" text-anchor="middle" fill="${C.mut}">Chưa xác định</text>`);
       continue;
     }
-    const n=rd.length,nx=x+W+G;
-    for(let j=0;j<rounds[r+1].length;j++){
-      const a=2*j,b=2*j+1,mxp=x+W+G/2;let d=`M${x+W} ${cs[r][a]}H${mxp}`;
-      if(b<n)d+=`M${x+W} ${cs[r][b]}H${mxp}M${mxp} ${cs[r][a]}V${cs[r][b]}`;
+    const nx=x+W+G,mxp=x+W+G/2,ul=[],uj=[];
+    let pos=0;
+    units[r].forEach((len,j)=>{
+      let d="";for(let k=0;k<len;k++){d+=`M${x+W} ${cs[r][pos+k]}H${mxp}`;ul.push(len);uj.push(j)}
+      if(len===2)d+=`M${mxp} ${cs[r][pos]}V${cs[r][pos+1]}`;
       d+=`M${mxp} ${cs[r+1][j]}H${nx}`;
-      s+=`<path d="${d}" fill="none" stroke="${C.ln}" stroke-width="1.6"/>`;
-    }
+      s+=`<path d="${d}" fill="none" stroke="${C.ln}" stroke-width="1.6"/>`;pos+=len;
+    });
     rd.forEach((v,i)=>{
-      const bye=n%2===1&&i===n-1,win=v&&!bye&&rounds[r+1][i>>1]===v,y=cs[r][i]-H/2,can=v&&!bye&&!ex;
-      s+=`<g class="slotg" ${can?`style="cursor:pointer" onclick="pick(${r},${i})"`:""}><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="8" fill="${win?C.win:C.box}" stroke="${bye?"#ff9f1c":C.bd}" stroke-width="${bye?2:1.5}" ${bye?'stroke-dasharray="5 3"':""}/>`+
-        (v?txt(x,cs[r][i],v,win?"#fff":C.tx,win,bye?"⭐ ":""):`<text x="${x+10}" y="${cs[r][i]+4.5}" fill="${C.mut}">· · ·</text>`)+`</g>`;
+      const dir=ul[i]===1,win=v&&!dir&&rounds[r+1][uj[i]]===v,yy=cs[r][i]-H/2,can=v&&!dir&&!ex;
+      s+=`<g class="slotg" ${can?`style="cursor:pointer" onclick="pick(${r},${i})"`:""}><rect x="${x}" y="${yy}" width="${W}" height="${H}" rx="8" fill="${win?C.win:C.box}" stroke="${dir?"#ff9f1c":C.bd}" stroke-width="${dir?2:1.5}" ${dir?'stroke-dasharray="5 3"':""}/>`+
+        (v?txt(x,cs[r][i],v,win?"#fff":C.tx,win,dir?"⭐ ":""):`<text x="${x+10}" y="${cs[r][i]+4.5}" fill="${C.mut}">· · ·</text>`)+`</g>`;
     });
   }
   return{svg:s+"</svg>",w,h};
 }
-function lab(nm){return esc(nm)}
 function show(){
-  const t=TYPES[cur],sport=esc($("sport").value.trim()||"Môn thi đấu");
+  const t=TYPES[cur],sport=esc($("sport").value.trim()||"Môn thi đấu"),u=uname();
   let h=`<div class="card"><h2>${sport} <span class="tag">${t.n}</span></h2>`;
-  if(pairsList.length)h+=`<div class="pairbox"><b>Kết quả bốc thăm ghép cặp:</b><div class="pairs">`+pairsList.map((p,i)=>`<div class="pair">${p}</div>`).join("")+`</div></div>`;
-  h+=`<div class="hint" style="margin-bottom:8px">Nhấn vào tên VĐV/cặp thắng để đưa vào vòng sau. Ô viền cam ⭐ là người được đặc cách.</div><div class="bwrap">${svgBracket(false).svg}</div>`;
+  if(pairsList.length)h+=`<div class="pairbox"><b>Kết quả bốc thăm ghép cặp:</b><div class="pairs">`+pairsList.map(p=>`<div class="pair">${p}</div>`).join("")+`</div></div>`;
+  h+=meta.m>0?`<div class="info">📐 Công thức: X = (A − 2ⁿ) × 2 = (${meta.A} − ${meta.N}) × 2 = <b>${meta.X}</b>. Có <b>${meta.X} ${u}</b> thi đấu vòng sơ loại (${meta.m} trận, chọn ra ${meta.m} người thắng) và <b>${meta.D} ${u}</b> được đặc cách (⭐ viền cam). Vào vòng trong còn đúng <b>${meta.N}</b> ${u}.</div>`:`<div class="info">📐 Số lượng ${meta.A} ${u} là lũy thừa của 2 nên không cần vòng sơ loại.</div>`;
+  h+=`<div class="hint" style="margin-bottom:8px">Nhấn vào tên VĐV/cặp thắng để đưa vào vòng sau.</div><div class="bwrap">${svgBracket(false).svg}</div>`;
   h+=`<div class="row"><button class="btn" onclick="drawNow()">🔁 Bốc thăm lại</button><button class="btn alt" onclick="exportDoc()">📄 Xuất file Word</button><button class="btn alt" onclick="window.print()">🖨 In lịch thi đấu (1 trang)</button></div></div>`;
   $("result").innerHTML=h;
 }
+/* ---------- Thu thập & bốc thăm ---------- */
+function pairForced(Al,Bl,rows,D,same){
+  const A=Al.slice(),B=same?A:Bl.slice(),f=[];
+  for(const r of rows){
+    if(f.length>=D)break;
+    const a=A.includes(r.a)?r.a:null;
+    const b=(B.includes(r.b)&&r.b!==a)?r.b:null;
+    if(!a&&!b)continue;
+    if(a)A.splice(A.indexOf(a),1);
+    if(b)B.splice(B.indexOf(b),1);
+    f.push({a,b});
+  }
+  const A2=shuffle(A),B2=same?A2:shuffle(B);
+  f.forEach(x=>{if(!x.a)x.a=A2.shift();if(!x.b)x.b=B2.shift()});
+  return{forced:f.map(x=>x.a+" & "+x.b),A:A2,B:B2};
+}
+function arrange(forced,rest){
+  const n=forced.length+rest.length,{m,D}=calc(n);
+  if(!m)return shuffle(forced.concat(rest));
+  const mt=Math.ceil(m/2);rest=shuffle(rest);
+  const direct=shuffle(forced.concat(rest.splice(0,Math.max(0,D-forced.length))));
+  return rest.slice(0,2*mt).concat(direct,rest.slice(2*mt));
+}
 function collect(){
   const t=TYPES[cur],e=entrants();pairsList=[];
-  if(e.n<2)throw t.t==="single"?"Cần ít nhất 2 vận động viên.":t.t==="pair"?(pmode==="rand"?"Cần ít nhất 4 VĐV để ghép thành 2 đội.":"Cần ít nhất 2 cặp."):"Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
-  const odd=e.n%2===1;
-  if(t.t==="pair"&&pmode==="rand")return collectRand(e,odd);
-  if(t.t!=="mixed"){
-    let arr=e.l;
-    if(odd&&byeS&&arr.includes(byeS)){const k=arr.indexOf(byeS);const rest=shuffle(arr.filter((_,i)=>i!==k));return rest.concat([byeS])}
-    return shuffle(arr);
+  if(e.n<2)throw t.t==="single"?"Cần ít nhất 2 vận động viên.":t.t==="pair"&&pmode==="fixed"?"Cần ít nhất 2 cặp.":t.t==="pair"?"Cần ít nhất 4 VĐV để ghép thành 2 đội.":"Cần ít nhất 2 nam và 2 nữ để tạo 2 cặp.";
+  const {N,m,D}=calc(e.n);let forced=[],rest=[],warn="";
+  if(isPM()){
+    const same=t.t!=="mixed",r=pairForced(same?e.p:e.m,same?e.p:e.f,directRows,D,same);
+    forced=r.forced;const k=e.n-forced.length;
+    for(let i=0;i<k;i++)rest.push(same?r.A[2*i]+" & "+r.A[2*i+1]:r.A[i]+" & "+r.B[i]);
+    if(same&&e.p.length%2)warn=`Lưu ý: số VĐV lẻ, ${esc(r.A[2*k])} chưa có đồng đội.`;
+    if(!same&&e.m.length!==e.f.length)warn=`Lưu ý: số nam (${e.m.length}) khác số nữ (${e.f.length}); ${Math.abs(e.m.length-e.f.length)} VĐV không có cặp.`;
+  }else{
+    const pool=e.l.slice();
+    directSel.forEach(nm=>{if(forced.length<D){const k=pool.indexOf(nm);if(k>=0){forced.push(nm);pool.splice(k,1)}}});
+    rest=pool;
   }
-  let M=e.m.slice(),F=e.f.slice(),bm=null,bf=null;
-  if(odd&&(byeM||byeF)){
-    bm=M.includes(byeM)?byeM:null;bf=F.includes(byeF)?byeF:null;
-    if(bm)M.splice(M.indexOf(bm),1);if(bf)F.splice(F.indexOf(bf),1);
-    M=shuffle(M);F=shuffle(F);if(!bm)bm=M.shift();if(!bf)bf=F.shift();
-  }else{M=shuffle(M);F=shuffle(F)}
-  const k=bm?e.n-1:e.n,ps=[];
-  for(let i=0;i<k;i++){ps.push(M[i]+" & "+F[i]);pairsList.push(`<b>♂ ${esc(M[i])}</b> + <i>♀ ${esc(F[i])}</i>`)}
-  if(bm){ps.push(bm+" & "+bf);pairsList.push(`<b>♂ ${esc(bm)}</b> + <i>♀ ${esc(bf)}</i> ⭐ đặc cách`)}
-  if(e.m.length!==e.f.length)pairsList.push(`<span class="err">Lưu ý: số nam (${e.m.length}) khác số nữ (${e.f.length}); ${Math.abs(e.m.length-e.f.length)} VĐV không có cặp.</span>`);
-  return ps;
+  const order=arrange(forced,rest),mt=Math.ceil(m/2);
+  if(isPM()){
+    order.forEach((s,i)=>{
+      const [a,b]=s.split(" & "),dir=m>0&&i>=2*mt&&i<2*mt+D,star=dir?" ⭐ đặc cách":"";
+      pairsList.push(t.t==="mixed"?`<b>♂ ${esc(a)}</b> + <i>♀ ${esc(b)}</i>${star}`:`<b>${esc(a)}</b> + <b>${esc(b)}</b>${star}`);
+    });
+    if(warn)pairsList.push(`<span class="err">${warn}</span>`);
+  }
+  return order;
 }
 function drawNow(){
   $("err").textContent="";
